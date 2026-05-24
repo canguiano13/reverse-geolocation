@@ -1,3 +1,5 @@
 dnspython
 maxminddb
 ipwhois
+requests
+dotenv
