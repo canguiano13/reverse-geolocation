@@ -1,38 +1,84 @@
-import maxminddb
+import csv
 import ipaddress
+import math
+import maxminddb
 
-def filter_ips_by_coordinates(db_path, min_lat, max_lat, min_lon, max_lon):
-    matching_networks = []
+INPUT_FILE  = "data/schools_selected.csv"
+OUTPUT_FILE = "data/phase1_candidates.csv"
+DB_FILE     = "data/GeoLite2-City.mmdb"
+RADIUS_KM   = 10
 
-    with maxminddb.open_database(db_path) as reader:
-        #network is IPv4 or IPv6 addr
-        for network, record in reader:
-            
-            #get latlong from record
-            location = record.get('location', {})
-            latitude = location.get('latitude')
-            longitude = location.get('longitude')
-            
-            if latitude is not None and longitude is not None:
-                if min_lat <= latitude <= max_lat and min_lon <= longitude <= max_lon:
-                    matching_networks.append({
-                        "cidr": str(network),
-                        "latitude": latitude,
-                        "longitude": longitude,
-                        "country": record.get('country', {}).get('names', {}).get('en', 'Unknown'),
-                        "city": record.get('city', {}).get('names', {}).get('en', 'Unknown')
-                    })
-                    
-    return matching_networks
+
+# rough square around point to quickly narrow down candidates
+def search_area(lat, lon, radius_km):
+    dlat = radius_km / 111.0
+    dlon = radius_km / (111.0 * math.cos(math.radians(lat)))
+    return lat - dlat, lat + dlat, lon - dlon, lon + dlon
+
+# distance btwn 2 coords in km
+def distance_km(lat1, lon1, lat2, lon2):
+    R = 6371.0
+    dlat = math.radians(lat2 - lat1)
+    dlon = math.radians(lon2 - lon1)
+    a = math.sin(dlat / 2) ** 2 + math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) * math.sin(dlon / 2) ** 2
+    return R * 2 * math.asin(math.sqrt(a))
+
+# skip very large IP blocks that take too long to scan
+def cidr_in_range(cidr):
+    try:
+        return ipaddress.ip_network(cidr, strict=False).prefixlen >= 24
+    except ValueError:
+        return False
+
 
 if __name__ == "__main__":
-    DB_FILE = "GeoLite2-City.mmdb"
+    with open(INPUT_FILE, newline="", encoding="utf-8") as f:
+        schools = list(csv.DictReader(f))
 
-    LAT, LON = 38.38474274, -93.93743896
-    MIN_LAT, MIN_LON, MAX_LAT, MAX_LON = LAT-0.3, LON-0.3, LAT+0.3, LON+0.3
+    schools = [s for s in schools if s["school_name"].strip().lower() != "name unknown"]
+    print(f"Loaded {len(schools)} schools from {INPUT_FILE}")
+
+    # precompute a search area around each school
+    school_data = []
+    for s in schools:
+        lat  = float(s["latitude"])
+        lon  = float(s["longitude"])
+        name = s["school_name"].strip()
+        min_lat, max_lat, min_lon, max_lon = search_area(lat, lon, RADIUS_KM)
+        school_data.append((name, lat, lon, min_lat, max_lat, min_lon, max_lon))
+
+    counts = [0] * len(school_data)
+    rows_written = 0
+
+    with open(OUTPUT_FILE, "w", newline="", encoding="utf-8") as out_f:
+        writer = csv.DictWriter(out_f, fieldnames=["cidr", "school_name"])
+        writer.writeheader()
+
+        # go through the database once and check all schools at the same time
+        with maxminddb.open_database(DB_FILE) as reader:
+            for network, record in reader:
+                location = record.get("location", {})
+                rec_lat  = location.get("latitude")
+                rec_lon  = location.get("longitude")
+                cidr = str(network)
+
+                if (rec_lat is None) or (rec_lon is None) or (not cidr_in_range(cidr)):
+                    continue
+
+                for idx, (name, lat, lon, min_lat, max_lat, min_lon, max_lon) in enumerate(school_data):
+                    
+                    # first check the rough box, then confirm w exact distance
+                    if not (min_lat <= rec_lat <= max_lat and min_lon <= rec_lon <= max_lon):
+                        continue
+                    if distance_km(lat, lon, rec_lat, rec_lon) > RADIUS_KM:
+                        continue
+
+                    writer.writerow({"cidr": cidr, "school_name": name})
+                    counts[idx] += 1
+                    rows_written += 1
+
+    for idx, (name, *_) in enumerate(school_data):
+        print(f"{name[:45]:<45}  {counts[idx]} blocks")
+
+    print(f"\nDone. {rows_written} total blocks written to {OUTPUT_FILE}")
     
-    results = filter_ips_by_coordinates(DB_FILE, MIN_LAT, MAX_LAT, MIN_LON, MAX_LON)
-    
-    print(f"\nFound {len(results)} IP networks in this range:\n")
-    for item in results:
-        print(f"CIDR: {item['cidr']:<18} | Location: {item['city']}, {item['country']} ({item['latitude']}, {item['longitude']})")
