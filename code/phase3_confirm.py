@@ -5,6 +5,7 @@ from ipwhois import IPWhois
 
 INPUT_FILE     = "data/phase2_filtered.csv"
 PROVIDERS_FILE = "data/school_providers.csv"
+ASDB_FILE      = "data/2026-03_categorized_ases.csv"
 OUTPUT_FILE    = "data/phase3_confirmed.csv"
 
 # if the IP is owned by one of these, it's a hosting provider, not a school
@@ -12,9 +13,6 @@ HOSTING_KEYWORDS = {
     "cloudflare", "google", "amazon", "aws", "microsoft",
     "azure", "fastly", "akamai", "digitalocean"
 }
-
-# org names that suggest an educational network
-EDU_KEYWORDS = {"cenic", "university", "education", "school", "research", "unified", "merit"}
 
 # noise words to strip before comparing company names
 GENERIC_TERMS = [
@@ -25,6 +23,29 @@ GENERIC_TERMS = [
 
 # cache WHOIS results so we don't repeat lookups for IPs in the same block
 whois_cache = {}
+
+
+# load ASNs categorized as education from the Stanford ASdb dataset
+def load_edu_asns():
+    edu_asns = set()
+    try:
+        with open(ASDB_FILE, newline="", encoding="utf-8") as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                # check all category columns (ASdb has up to 3)
+                categories = " ".join([
+                    row.get("Category 1", ""),
+                    row.get("Category 2", ""),
+                    row.get("Category 3", ""),
+                ]).lower()
+                if "education" in categories or "research" in categories:
+                    asn = str(row.get("ASN", "")).strip()
+                    if asn:
+                        edu_asns.add(asn)
+        print(f"Loaded {len(edu_asns)} educational ASNs from {ASDB_FILE}")
+    except FileNotFoundError:
+        print(f"Warning: {ASDB_FILE} not found, educational ASN check disabled")
+    return edu_asns
 
 
 def normalize_org(name):
@@ -87,6 +108,8 @@ if __name__ == "__main__":
     with open(INPUT_FILE, newline="", encoding="utf-8") as f:
         rows = list(csv.DictReader(f))
 
+    edu_asns = load_edu_asns()
+
     # load ISP providers per school from fcc_get_providers.py output
     providers = {}
     try:
@@ -114,7 +137,7 @@ if __name__ == "__main__":
         norm_org = normalize_org(org_name)
 
         is_hosting = any(h in norm_org for h in HOSTING_KEYWORDS)
-        is_edu     = any(e in norm_org for e in EDU_KEYWORDS)
+        is_edu     = str(asn) in edu_asns
 
         if is_hosting:
             whois_match = False
