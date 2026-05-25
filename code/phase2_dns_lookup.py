@@ -19,6 +19,7 @@ STOP_WORDS = {
     "high", "junior", "senior", "jr", "sr", "academy", "academies",
     "public", "charter", "magnet", "preparatory", "prep", "independent",
     "international", "institute", "center", "campus",
+    "north", "south", "east", "west",
 }
 
 # words in a hostname that suggest it belongs to a school
