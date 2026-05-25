@@ -1,8 +1,0 @@
-ip_address,school_name,district_name,hostname,match_type,asn,whois_org_name
-137.164.43.10,Davis High School,Davis Joint Unified,k12-davis-hs.static.cenic.net,match,2152,"CENIC-2152 - CENIC, US"
-69.252.80.75,Armijo High School,Fairfield-Suisun Unified,k12.solanocoe.net,partial_match,Error,Error
-76.220.12.1,Napa High School,Napa Valley Unified,100.2.0.192.in-addr.arpa.comcast.net,no_match,Error,Error
-104.16.132.229,Johns Elementary,Rural Independent School District,,no_record,13335,"CLOUDFLARENET - Cloudflare, Inc., US"
-8.8.8.8,Lincoln High School,San Francisco Unified,lincolnhs.sfusd.edu,match,15169,"GOOGLE - Google LLC, US"
-73.158.12.50,Oak Tree Middle,Urban School District,c-203-0-113-210.hsd1.ca.comcast.net,no_match,7922,"COMCAST-7922 - Comcast Cable Communications, LLC, US"
-76.78.246.78,Cherry Creek High School,Cherry Creek School District,cherrycreekschools.org,match,NA,NA
