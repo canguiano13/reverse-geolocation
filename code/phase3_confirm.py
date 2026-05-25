@@ -32,14 +32,13 @@ def load_edu_asns():
         with open(ASDB_FILE, newline="", encoding="utf-8") as f:
             reader = csv.DictReader(f)
             for row in reader:
-                # check all category columns (ASdb has up to 3)
-                categories = " ".join([
-                    row.get("Category 1", ""),
-                    row.get("Category 2", ""),
-                    row.get("Category 3", ""),
-                ]).lower()
-                if "education" in categories or "research" in categories:
+                # check all category columns — ASdb has up to 68, each split into Layer 1 and Layer 2
+                all_cats = " ".join(v for k, v in row.items() if "Category" in k and v).lower()
+                if "education" in all_cats or "research" in all_cats:
                     asn = str(row.get("ASN", "")).strip()
+                    # ASN values are formatted as "AS3255" — strip the prefix
+                    if asn.upper().startswith("AS"):
+                        asn = asn[2:]
                     if asn:
                         edu_asns.add(asn)
         print(f"Loaded {len(edu_asns)} educational ASNs from {ASDB_FILE}")
