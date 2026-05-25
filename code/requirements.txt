@@ -1,5 +1,7 @@
 dnspython
 maxminddb
 ipwhois
+pandas
 requests
 dotenv
+
