@@ -3,5 +3,4 @@ maxminddb
 ipwhois
 pandas
 requests
-dotenv
-
+python-dotenv
