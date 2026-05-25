@@ -1,0 +1,59 @@
+import csv
+import pandas as pd
+
+INPUT_FILE  = "data/school_blocks.csv"
+OUTPUT_FILE = "data/school_providers.csv"
+
+# download these from https://broadbandmap.fcc.gov/home → Data Downloads → select New York
+FCC_DATA_FILES = [
+    "bdc_36_Cable_fixed_broadband_D25_04may2026.csv",
+    "bdc_36_FibertothePremises_fixed_broadband_D25_04may2026.csv",
+]
+
+
+# find all ISPs serving the census tract a school is in
+# the first 11 digits of the 15-digit block code identify the census tract
+def get_providers(census_tract):
+    providers = set()
+    for file_path in FCC_DATA_FILES:
+        try:
+            df = pd.read_csv(
+                file_path,
+                usecols=["block_geoid", "brand_name"],
+                dtype={"block_geoid": str, "brand_name": str}
+            )
+            matches = df[df["block_geoid"].str.startswith(census_tract, na=False)]
+            for brand in matches["brand_name"].dropna().unique():
+                providers.add(brand)
+        except FileNotFoundError:
+            print(f"Warning: {file_path} not found, skipping")
+    return list(providers)
+
+
+if __name__ == "__main__":
+    with open(INPUT_FILE, newline="", encoding="utf-8") as f:
+        schools = list(csv.DictReader(f))
+
+    print(f"Looking up providers for {len(schools)} schools")
+
+    results = []
+    for i, school in enumerate(schools, 1):
+        name  = school["school_name"].strip()
+        block = school["census_block"].strip()
+
+        if not block:
+            results.append({"school_name": name, "providers": ""})
+            print(f"{i}/{len(schools)}  {name[:45]:<45}  no block code")
+            continue
+
+        tract     = block[:11]
+        providers = get_providers(tract)
+        results.append({"school_name": name, "providers": "|".join(providers)})
+        print(f"{i}/{len(schools)}  {name[:45]:<45}  {len(providers)} providers")
+
+    with open(OUTPUT_FILE, "w", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(f, fieldnames=["school_name", "providers"])
+        writer.writeheader()
+        writer.writerows(results)
+
+    print(f"\nDone. Saved to {OUTPUT_FILE}")
