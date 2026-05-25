@@ -6,8 +6,8 @@ OUTPUT_FILE = "data/school_providers.csv"
 
 # download these from https://broadbandmap.fcc.gov/home → Data Downloads → select New York
 FCC_DATA_FILES = [
-    "bdc_36_Cable_fixed_broadband_D25_04may2026.csv",
-    "bdc_36_FibertothePremises_fixed_broadband_D25_04may2026.csv",
+    "data/bdc_36_Cable_fixed_broadband_D25_04may2026.csv",
+    "data/bdc_36_FibertothePremises_fixed_broadband_D25_04may2026.csv",
 ]
 
 
