@@ -81,21 +81,17 @@ if __name__ == "__main__":
     if skipped:
         print(f"Skipping {len(skipped)} schools with >{MAX_CIDRS} blocks")
 
-    # expand each IP block into individual IPs
-    jobs = []
+    # group CIDRs by school so we can process one school at a time
+    by_school = defaultdict(list)
     for row in rows:
         school = row["school_name"].strip()
         if cidr_counts[school] > MAX_CIDRS:
             continue
-        school_kws = extract_keywords(school)
-        try:
-            for ip in ipaddress.ip_network(row["cidr"].strip(), strict=False).hosts():
-                jobs.append((str(ip), school, school_kws))
-        except ValueError:
-            continue
+        by_school[school].append(row["cidr"].strip())
 
-    total = len(jobs)
-    print(f"Processing {len(cidr_counts) - len(skipped)} schools → {total} IPs to check")
+    schools_to_run = list(by_school.keys())
+    total_schools  = len(schools_to_run)
+    print(f"Processing {total_schools} schools")
 
     counts    = defaultdict(int)
     completed = 0
@@ -103,22 +99,46 @@ if __name__ == "__main__":
     with open(OUTPUT_FILE, "w", newline="", encoding="utf-8") as out_f:
         writer = csv.DictWriter(out_f, fieldnames=["ip_address", "school_name", "district_name", "hostname", "match_type"])
         writer.writeheader()
+        out_f.flush()
 
         with ThreadPoolExecutor(max_workers=WORKERS) as executor:
-            futures = {executor.submit(lookup, ip, school, kws): ip for ip, school, kws in jobs}
+            for s_idx, school in enumerate(schools_to_run, 1):
+                school_kws = extract_keywords(school)
+                print(f"[{s_idx}/{total_schools}] {school[:45]} ...", flush=True)
 
-            for future in as_completed(futures):
-                result = future.result()
-                match_type = result["match_type"]
-                counts[match_type] += 1
-                completed += 1
+                # expand this school's CIDRs into individual IPs (IPv4 only)
+                jobs = []
+                for cidr in by_school[school]:
+                    try:
+                        net = ipaddress.ip_network(cidr, strict=False)
+                        if not isinstance(net, ipaddress.IPv4Network):
+                            continue
+                        for ip in net.hosts():
+                            jobs.append(str(ip))
+                    except ValueError:
+                        continue
 
-                if match_type in ("match", "partial_match"):
-                    writer.writerow(result)
-                    print(f"  {result['ip_address']}  [{match_type}]  {result['hostname']}")
+                print(f"  expanding done: {len(jobs)} IPs to check", flush=True)
 
-                if completed % 10000 == 0 or completed == total:
-                    print(f"Progress: {completed}/{total} IPs checked")
+                # submit only this school's IPs, wait for all, then move on
+                futures = {executor.submit(lookup, ip, school, school_kws): ip for ip in jobs}
+                school_done = 0
+                for future in as_completed(futures):
+                    result = future.result()
+                    match_type = result["match_type"]
+                    counts[match_type] += 1
+                    completed += 1
+                    school_done += 1
+
+                    if match_type in ("match", "partial_match"):
+                        writer.writerow(result)
+                        out_f.flush()
+                        print(f"  {result['ip_address']}  [{match_type}]  {result['hostname']}", flush=True)
+
+                    if school_done % 10000 == 0:
+                        print(f"  ... {school_done}/{len(jobs)} IPs checked for this school", flush=True)
+
+                print(f"  done. total checked so far: {completed}", flush=True)
 
     print(f"\nDone. Results written to {OUTPUT_FILE}")
     print(f"match: {counts['match']}  partial: {counts['partial_match']}  no_match: {counts['no_match']}  no_record: {counts['no_record']}")
