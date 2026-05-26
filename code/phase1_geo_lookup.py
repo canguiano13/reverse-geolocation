@@ -6,7 +6,8 @@ import maxminddb
 INPUT_FILE  = "data/schools_selected.csv"
 OUTPUT_FILE = "data/phase1_candidates.csv"
 DB_FILE     = "data/GeoLite2-City.mmdb"
-RADIUS_KM   = 20 #10
+# RADIUS_KM   = 20 
+RADIUS_KM   = 10
 
 
 # rough square around point to quickly narrow down candidates
