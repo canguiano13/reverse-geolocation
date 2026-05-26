@@ -10,7 +10,7 @@ INPUT_FILE  = "data/phase1_candidates.csv"
 OUTPUT_FILE = "data/phase2_filtered.csv"
 TIMEOUT     = 1.0
 WORKERS     = 50
-MAX_CIDRS   = 1000  # skip schools with too many IP blocks (usually dense urban areas)
+MAX_CIDRS   = 2000 #1000  # skip schools with too many IP blocks (usually dense urban areas)
 
 # words to ignore when pulling keywords out of a school name
 STOP_WORDS = {
