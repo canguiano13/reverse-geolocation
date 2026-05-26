@@ -3,7 +3,7 @@ import time
 import math
 import requests
 
-API_KEY      = "TEMP_API_KEY"   # replace with your RIPE Atlas API key
+API_KEY      = "30474c9f-e4c0-4e96-9397-c0158d144694"
 INPUT_FILE   = "data/phase3_confirmed.csv"
 SCHOOLS_FILE = "data/schools_selected.csv"
 OUTPUT_FILE  = "data/phase4_validated.csv"
@@ -81,6 +81,7 @@ def create_ping(target_ip, probe_ids):
         r = requests.post(f"{ATLAS_BASE}/measurements/", headers=HEADERS, timeout=15, json={
             "definitions": [{
                 "type": "ping",
+                "af": 4,
                 "target": target_ip,
                 "packets": 3,
                 "description": f"school-ip-validation {target_ip}",
@@ -92,7 +93,9 @@ def create_ping(target_ip, probe_ids):
             }],
             "is_oneoff": True,
         })
-        r.raise_for_status()
+        if not r.ok:
+            print(f"    measurement creation error: {r.status_code} — {r.text}")
+            return None
         ids = r.json().get("measurements", [])
         return ids[0] if ids else None
     except Exception as e:
