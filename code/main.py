@@ -41,7 +41,8 @@ import check_probe_coverage    as probe_check
 
 # ── configuration ────────────────────────────────────────────────────────────
 
-RADII            = [10, 20]                               # km thresholds to run
+# RADII            = [10, 20]                               # km thresholds to run
+RADII            = [30]                               # km thresholds to run
 SCHOOLS_FILE     = "data/inputs/gigamaps_schools_ny.csv"  # all 13k NY schools
 FORCE_RERUN_FROM = 1                                      # full re-run from phase 1
                                                           # set to None to skip existing files
