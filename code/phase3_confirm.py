@@ -16,10 +16,10 @@ import re
 import ipaddress
 from ipwhois import IPWhois
 
-INPUT_FILE     = "data/phase2_filtered.csv"
-PROVIDERS_FILE = "data/school_providers.csv"   # ISPs serving each school (from FCC data)
-ASDB_FILE      = "data/2026-03_categorized_ases.csv"  # ASNs categorized as education
-OUTPUT_FILE    = "data/phase3_confirmed.csv"
+INPUT_FILE     = "data/outputs/phase2_filtered.csv"
+PROVIDERS_FILE = "data/inputs/school_providers.csv"    # ISPs serving each school (from FCC data)
+ASDB_FILE      = "data/inputs/2026-03_categorized_ases.csv"   # ASNs categorized as education
+OUTPUT_FILE    = "data/outputs/phase3_confirmed.csv"
 
 # IPs owned by these hosting/CDN providers are not school IPs
 HOSTING_PROVIDERS = {

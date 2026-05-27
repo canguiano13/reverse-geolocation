@@ -12,8 +12,8 @@ import math
 import time
 import requests
 
-SCHOOLS_FILE = "data/schools_selected.csv"
-OUTPUT_FILE  = "data/probe_coverage.csv"
+SCHOOLS_FILE = "data/inputs/schools_selected.csv"
+OUTPUT_FILE  = "data/outputs/probe_coverage.csv"
 NEAR_KM      = 40
 
 

@@ -1,0 +1,192 @@
+school_name,latitude,longitude,probes_within_40km,has_probes
+Tottenville High School,40.5283126831055,-74.1935272216797,91,yes
+Roosevelt Elementary School,40.5452880859375,-74.5914077758789,30,yes
+Rachel Carson High School for Coastal Studies,40.5827407836914,-73.9723052978516,87,yes
+Lido Elementary School,40.5905151367188,-73.629768371582,53,yes
+Saint Edmund Preparatory High School,40.6008338928223,-73.952018737793,86,yes
+New Utrecht High School,40.6130294799805,-74.0022735595703,88,yes
+Port Richmond High School,40.6353378295898,-74.1420593261719,92,yes
+Waverly Park Elementary School,40.638111114502,-73.675666809082,67,yes
+Rhame Avenue Elementary School,40.6383857727051,-73.6647720336914,67,yes
+East Rockaway Junior-Senior High School,40.6464195251465,-73.6572570800781,68,yes
+Evergreen Elementary School,40.6556053161621,-74.3848876953125,93,yes
+Seaford Harbor Elementary School,40.6565475463867,-73.5003204345703,12,yes
+Howard T. Herber Middle School,40.6696014404297,-73.6627578735352,70,yes
+Merrick Avenue Middle School,40.6714668273926,-73.5576400756836,53,yes
+Harding Avenue Elementary School,40.6736755371094,-73.3524780273438,9,yes
+South Brooklyn Community High School,40.6777954101563,-74.0141525268555,89,yes
+Susan E. Wiley Elementary School,40.6790580749512,-73.3945541381836,9,yes
+Park Avenue Elementary School,40.6806945800781,-73.5484161376953,52,yes
+William S. Covert Elementary School,40.6828346252441,-73.6231384277344,69,yes
+East Lake Elementary School,40.6864128112793,-73.4406585693359,10,yes
+Hanson Place Seventh-Day Adventist Elementary School,40.6867599487305,-73.9769973754883,85,yes
+Edmund W. Miles Middle School,40.689640045166,-73.4178085327148,9,yes
+Lindenhurst High School,40.696403503418,-73.3646469116211,9,yes
+John G. Dinkelmeyer Elementary School,40.6972236633301,-73.5476379394531,54,yes
+Farmingdale High School,40.7073211669922,-73.4461212158203,12,yes
+Walnut Street Elementary School,40.7075309753418,-73.5806732177734,61,yes
+Sewanhaka High School,40.7162780761719,-73.6902313232422,72,yes
+Stuyvesant High School,40.7180137634277,-74.0138244628906,87,yes
+Santapogue Elementary School,40.7211151123047,-73.3719940185547,9,yes
+Marion G. Vedder Elementary School,40.7221450805664,-73.3238372802734,9,yes
+Glenwood Elementary School,40.7253952026367,-74.3322448730469,92,yes
+Elisabeth Irwin High School,40.7269248962402,-74.0047836303711,85,yes
+Belmont Elementary School,40.7272758483887,-73.3561706542969,11,yes
+Forest Hills High School,40.7300033569336,-73.8440017700195,82,yes
+Bay Shore High School,40.731315612793,-73.253662109375,7,yes
+Martin Van Buren High School,40.7338981628418,-73.7397308349609,83,yes
+Idle Hour Elementary School,40.7351837158203,-73.1526336669922,7,yes
+New Hyde Park Road Elementary School,40.7359466552734,-73.6796722412109,73,yes
+Cherry Avenue Elementary School,40.7392997741699,-73.0929183959961,7,yes
+Academy Street Elementary School,40.7396507263184,-73.0592575073242,6,yes
+Queens Technical High School,40.7416076660156,-73.927978515625,83,yes
+Landmark High School,40.7434043884277,-74.0025405883789,88,yes
+East Islip High School,40.7512512207031,-73.1831359863281,7,yes
+Hicksville High School,40.7581748962402,-73.5271148681641,27,yes
+Laurel Park Elementary School,40.7605514526367,-73.2301483154297,7,yes
+South Ocean Middle School,40.7610206604004,-73.0112457275391,6,yes
+Brentwood High School,40.7739334106445,-73.2552719116211,9,yes
+Cantiague Elementary School,40.7786254882813,-73.5526657104492,58,yes
+Howard B. Mattlin Middle School,40.7792053222656,-73.4636535644531,15,yes
+Hunter College Campus Schools,40.7859230041504,-73.9541397094727,85,yes
+Richard S. Sherman - Great Neck North Middle School,40.8030853271484,-73.7439117431641,79,yes
+"Columbia Secondary School For Math, Science And Engineering",40.8107757568359,-73.9562377929688,84,yes
+Vanderbilt Elementary School,40.8154563903809,-73.3412857055664,13,yes
+Bronx Community High School,40.8233337402344,-73.9072189331055,85,yes
+Middle School X101 Edward R Byrne,40.8269920349121,-73.8294906616211,84,yes
+Henry P Becton Regional High School,40.8321838378906,-74.0931625366211,82,yes
+Dogwood Elementary School,40.8574600219727,-73.1774215698242,8,yes
+Accompsett Elementary School,40.8624114990234,-73.2368927001953,11,yes
+Accompsett Middle School,40.8644599914551,-73.23974609375,11,yes
+Mills Pond Elementary School,40.8759155273438,-73.1402206420898,8,yes
+Pulaski Road Elementary School,40.8761940002441,-73.3372802734375,14,yes
+Ann MacArthur Primary School,40.8822364807129,-73.5864334106445,55,yes
+William T. Rogers Middle School,40.8901557922363,-73.2506637573242,12,yes
+Comsewogue High School,40.907341003418,-73.0355453491211,6,yes
+Martin Luther King Junior High Technical and Computer Magnet School,40.9317665100098,-73.8934707641602,77,yes
+Rocky Point Middle/High School,40.9400787353516,-72.9425201416016,5,yes
+Highview School,41.022876739502,-73.7906875610352,70,yes
+Eric S Simith Middle School,41.0666618347168,-74.1512985229492,39,yes
+Byram Hills High School,41.1363792419434,-73.6902923583984,16,yes
+Fox Lane Middle School,41.1891326904297,-73.675910949707,13,yes
+Mount Kisco Elementary School,41.2025527954102,-73.7287292480469,13,yes
+Bedford Village Elementary School,41.2056083679199,-73.6404647827148,13,yes
+Greenwood Lake Middle School,41.2677764892578,-74.2574996948242,7,yes
+Peekskill Middle School,41.2889823913574,-73.9209747314453,13,yes
+Sapphire Elementary School,41.2955551147461,-74.1680526733398,7,yes
+Mohansic Elementary School,41.2974967956543,-73.8038330078125,18,yes
+North Main Street Elementary School,41.333366394043,-74.1864700317383,7,yes
+Putnam Valley Middle School,41.3358345031738,-73.8586120605469,15,yes
+James I O'Neill High School,41.3503189086914,-73.9756927490234,12,yes
+Mahopac High School,41.3651580810547,-73.7571792602539,17,yes
+Round Hill Elementary School,41.3955879211426,-74.1791458129883,10,yes
+Cornwall Central Middle School,41.4433288574219,-74.0318603515625,12,yes
+Kent Elementary School,41.4920997619629,-73.6818008422852,12,yes
+Fishkill Elementary School,41.5374984741211,-73.9013900756836,10,yes
+John G Borden Middle School,41.6035995483398,-74.1757583618164,8,yes
+Fallsburg Junior Senior High School,41.7323150634766,-74.6143264770508,0,no
+Haviland Middle School,41.7727775573731,-73.9066696166992,7,yes
+Webutuck Middle School-High School,41.8861122131348,-73.5358352661133,2,yes
+Rhinebeck High School,41.9253692626953,-73.9004135131836,6,yes
+Otto-Eldred Junior/Senior High School,41.9378166198731,-78.4746475219727,0,no
+Woodstock Elementary School,42.0351371765137,-74.1114273071289,3,yes
+Jasper-Troupsburg Elementary School,42.0457992553711,-77.5454483032227,0,no
+Tioga Senior High School,42.0577774047852,-76.3511123657227,3,yes
+Bolivar Richburg Junior Senior High School,42.0661735534668,-78.1601257324219,0,no
+Olean Senior High School,42.0825004577637,-78.4347229003906,0,no
+Windsor Elementary School,42.0828590393066,-75.6415710449219,2,yes
+Southwestern High School,42.0921363830566,-79.2911148071289,0,no
+Union-Endicott High School,42.0976333618164,-76.0483322143555,4,yes
+Seton Catholic Central High School,42.0984840393066,-75.928581237793,3,yes
+Owego Elementary School,42.1139450073242,-76.2738037109375,4,yes
+Cohen Middle School,42.1202201843262,-76.8318481445313,1,yes
+Wellsville Elementary School,42.12060546875,-77.9275054931641,0,no
+Walton Central School Middle and High,42.1600341796875,-75.1256408691406,0,no
+Prospect Elementary School,42.1625633239746,-78.6928100585938,0,no
+Hunter-Tannsersville Middle School High School,42.1972579956055,-74.13720703125,2,yes
+Spencer-Van Etten High School,42.2038879394531,-76.5222244262695,3,yes
+Sidney Elementary School,42.3048706054688,-75.3848495483398,1,yes
+Cattaraugus Central High School,42.3339500427246,-78.8594818115234,0,no
+Keshequa Central High School,42.5780258178711,-77.9410400390625,0,no
+Nunda Middle and High School,42.5780258178711,-77.9410400390625,0,no
+Groton Elementary,42.5839653015137,-76.3580322265625,1,yes
+Bethlehem Central Middle School,42.6192893981934,-73.8253936767578,4,yes
+Homer High School,42.6304054260254,-76.1894378662109,0,no
+Clayton A. Boughton High School,42.6411094665527,-73.9638900756836,4,yes
+Green Tech High Charter School,42.6427917480469,-73.7701644897461,3,yes
+Voorheesville Elementary School,42.6488189697266,-73.9374237060547,4,yes
+New Scotland Elementary,42.6544151306152,-73.7926406860352,3,yes
+Bell Top Elementary School,42.6678924560547,-73.6827392578125,3,yes
+Robert Frost Elementary School,42.685173034668,-71.1686096191406,40,yes
+Farnsworth Middle School,42.6899795532227,-73.8962249755859,3,yes
+Poestenkill Elementary School,42.6900978088379,-73.5697708129883,3,yes
+Cooperstown Elementary School,42.6908798217773,-74.9319534301758,0,no
+Tech Valley High School,42.6918830871582,-73.8359985351563,3,yes
+Blue Creek Elementary School,42.7399826049805,-73.7499389648438,3,yes
+KIPP Troy Prep Elementary School,42.7483520507813,-73.6822280883789,3,yes
+Lisha Kill Middle School,42.7487182617188,-73.8577117919922,3,yes
+Turnpike Elementary School,42.7903633117676,-73.6667404174805,3,yes
+William C Keane Elementary School,42.796314239502,-73.9246063232422,3,yes
+Hamilton Elementary School,42.7965812683106,-73.9495086669922,3,yes
+Martin Luther King Magnet Elementary School,42.801872253418,-73.9348983764648,3,yes
+Fabius-Pompey Middle School-High School,42.8282890319824,-75.9861373901367,4,yes
+West Senior High School,42.8331031799316,-78.7725143432617,16,yes
+Lorraine Elementary School,42.8466873168945,-78.8145523071289,16,yes
+Lancaster Middle School,42.8954277038574,-78.673713684082,16,yes
+Avon Middle School,42.9059257507324,-77.739128112793,10,yes
+Waterloo High & Middle School Campus,42.913745880127,-76.8699569702148,0,no
+Seneca Falls Middle School,42.9206314086914,-76.7988662719727,0,no
+Skaneateles High School,42.9514236450195,-76.4209518432617,3,yes
+Red Jacket High School,42.9597434997559,-77.2319869995117,11,yes
+Amsterdam High School,42.9658660888672,-74.1760787963867,0,no
+Kenmore West Sr. High School,42.9736976623535,-78.8642654418945,16,yes
+Pembroke Jr. Sr. High School,42.9912376403809,-78.4038696289063,1,yes
+Eagle Hill Middle School,42.9964561462402,-75.9568634033203,4,yes
+Enders Road Elementary School,42.9989547729492,-75.9568634033203,4,yes
+OESJ High School,43.0010948181152,-74.6762619018555,0,no
+Immaculate Conception Elementary School,43.0240058898926,-75.9922637939453,4,yes
+Westhill Central High School,43.0300674438477,-76.2021484375,4,yes
+Jordan-Elbridge Senior High School,43.0456695556641,-76.4728240966797,3,yes
+OESJ Elementary/Middle School,43.0611152648926,-74.6631240844727,0,no
+Macedon Elementary School,43.0697593688965,-77.3056335449219,12,yes
+Pine Grove Middle and Woodland Elementary,43.0774192810059,-76.0225524902344,4,yes
+Jefferson Road Elementary School,43.0810241699219,-77.5123672485352,12,yes
+Lake Avenue Elementary School,43.0825653076172,-73.7780151367188,0,no
+John F Hughes Elementary School,43.0825691223145,-75.262939453125,0,no
+Gaskill High School,43.097526550293,-79.0262451171875,16,yes
+North Broad Elementary School,43.098331451416,-75.6558303833008,3,yes
+Maple Avenue Middle School,43.1085662841797,-73.7737121582031,0,no
+Mayfield Elementary School,43.1107940673828,-74.2607574462891,0,no
+Donlin Drive Elementary School,43.1147041320801,-76.1743927001953,4,yes
+Vernon-Verona-Sherrill Senior High School,43.1155548095703,-75.5683364868164,1,yes
+John F. Kennedy Middle School,43.1173324584961,-75.1989593505859,0,no
+Rockester Preparatory High School,43.152400970459,-77.6816024780273,12,yes
+Marion Junior-Senior High School,43.1728744506836,-77.1885070800781,12,yes
+Ballard Elementary School,43.1783180236816,-73.7351608276367,0,no
+DeSales Elementary and Middle School,43.1808891296387,-78.6578063964844,16,yes
+Willow Field Elementary School,43.1824569702148,-76.241340637207,3,yes
+Bellamy Elementary School,43.206729888916,-75.4213333129883,0,no
+Spry Middle School,43.2075576782227,-77.4330978393555,12,yes
+Willink Middle School,43.2194480895996,-77.4642639160156,12,yes
+Albion Middle School,43.2400665283203,-78.1859588623047,0,no
+Corinth Middle-High School,43.2430381774902,-73.8281936645508,0,no
+Paddy Hill Elementary School,43.2515029907227,-77.6610870361328,12,yes
+Millard Hawk Elementary School,43.2789916992188,-76.1483154296875,3,yes
+Paul V Moore High School,43.2815132141113,-76.1502304077148,3,yes
+Abraham Wing Elementary School,43.3149299621582,-73.6322860717773,0,no
+Whitehall Elementary School,43.5555572509766,-73.3744430541992,1,yes
+Sandy Creek High School,43.6477088928223,-76.0757827758789,2,yes
+General Bruce C. Clark Junior/Senior High School,43.8287124633789,-76.0143585205078,2,yes
+Ohio Elementary School,43.9723091125488,-75.8831100463867,2,yes
+Dexter Elementary School,44.0125617980957,-76.0379867553711,2,yes
+Indian River Central High School,44.143123626709,-75.7135162353516,2,yes
+Theresa Elementary School,44.218994140625,-75.7889785766602,1,yes
+Lake Placid High School,44.2821273803711,-73.9850616455078,0,no
+Paul Smiths College,44.4356079101563,-74.1868209838867,0,no
+Grant C. Madill Elementary School,44.684757232666,-75.5013885498047,0,no
+John F. Kennedy Elementary School,44.6966018676758,-75.4730911254883,0,no
+Madrid-Waddington High School,44.7886695861816,-75.1535415649414,0,no
+Malone Middle School,44.8469429016113,-74.2961120605469,0,no
+Flanders Elementary School,44.8489379882813,-74.2860107421875,0,no
+Madison Elementary School,44.9456176757813,-74.90576171875,0,no
+Rouses Point Elementary School,44.9871330261231,-73.3680038452148,3,yes

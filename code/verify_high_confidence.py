@@ -16,10 +16,10 @@ import requests
 import time
 
 FILES = {
-    "10km": "data/phase3_confirmed_10km.csv",
-    "20km": "data/phase3_confirmed_20km.csv",
+    "10km": "data/outputs/phase3_confirmed_10km.csv",
+    "20km": "data/outputs/phase3_confirmed_20km.csv",
 }
-OUTPUT_FILE = "data/verification_results.csv"
+OUTPUT_FILE = "data/outputs/verification_results.csv"
 
 ARIN_URL = "https://rdap.arin.net/registry/ip/{}"
 

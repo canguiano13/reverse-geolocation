@@ -21,9 +21,9 @@ import math
 import requests
 
 API_KEY      = "30474c9f-e4c0-4e96-9397-c0158d144694"
-INPUT_FILE   = "data/phase3_confirmed.csv"
-SCHOOLS_FILE = "data/schools_selected.csv"
-OUTPUT_FILE  = "data/phase4_validated.csv"
+INPUT_FILE   = "data/outputs/phase3_confirmed.csv"
+SCHOOLS_FILE = "data/inputs/schools_selected.csv"
+OUTPUT_FILE  = "data/outputs/phase4_validated.csv"
 
 ATLAS_API    = "https://atlas.ripe.net/api/v2"
 HEADERS      = {"Authorization": f"Key {API_KEY}", "Content-Type": "application/json"}

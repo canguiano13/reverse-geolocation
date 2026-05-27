@@ -11,9 +11,9 @@ import ipaddress
 import math
 import maxminddb
 
-SCHOOLS_FILE = "data/schools_selected.csv"
-OUTPUT_FILE  = "data/phase1_candidates.csv"
-DB_FILE      = "data/GeoLite2-City.mmdb"
+SCHOOLS_FILE = "data/inputs/schools_selected.csv"
+OUTPUT_FILE  = "data/outputs/phase1_candidates.csv"
+DB_FILE      = "data/inputs/GeoLite2-City.mmdb"
 RADIUS_KM    = 10
 
 

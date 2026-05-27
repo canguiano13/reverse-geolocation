@@ -5,18 +5,25 @@ For every IP block found in phase 1, expands it into individual IPs
 and checks what hostname is registered to each one (PTR record).
 Keeps only IPs whose hostname contains the school's name or a K-12 keyword.
 Uses 50 parallel threads so DNS lookups run simultaneously instead of one-by-one.
+
+Checkpointing: progress is saved after each school. If the run is interrupted,
+restart and it picks up where it left off instead of starting over.
+
+Test mode: set test_cap=500 in main.py to only process the first 500 schools
+and estimate how long the full run will take.
 """
 
 import csv
 import ipaddress
+import os
 import re
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import dns.resolver
 import dns.reversename
 
-INPUT_FILE  = "data/phase1_candidates.csv"
-OUTPUT_FILE = "data/phase2_filtered.csv"
+INPUT_FILE  = "data/outputs/phase1_candidates.csv"
+OUTPUT_FILE = "data/outputs/phase2_filtered.csv"
 
 TIMEOUT   = 1.0   # seconds before a DNS lookup is considered failed
 WORKERS   = 50    # number of parallel DNS lookups
@@ -112,7 +119,21 @@ def check_ip(ip, school_name, keywords):
     }
 
 
-def run(input_file=INPUT_FILE, output_file=OUTPUT_FILE):
+def run(input_file=INPUT_FILE, output_file=OUTPUT_FILE, test_cap=None, force_fresh=False):
+
+    # Checkpoint file sits next to the output file — tracks which schools are done
+    checkpoint_file = output_file.replace(".csv", "_checkpoint.txt")
+
+    # Load already-completed schools so we can skip them on resume
+    completed = set()
+    if not force_fresh and os.path.exists(checkpoint_file) and os.path.exists(output_file):
+        with open(checkpoint_file) as f:
+            completed = set(line.strip() for line in f if line.strip())
+        print(f"Resuming from checkpoint: {len(completed)} schools already done")
+    else:
+        # Fresh start — clear any old checkpoint
+        if os.path.exists(checkpoint_file):
+            os.remove(checkpoint_file)
 
     # Step 1: Load IP blocks from phase 1
     with open(input_file, newline="", encoding="utf-8") as f:
@@ -132,25 +153,37 @@ def run(input_file=INPUT_FILE, output_file=OUTPUT_FILE):
     if skipped:
         print(f"Skipping {skipped} schools with >{MAX_CIDRS} IP blocks")
 
-    schools    = list(blocks_per_school.keys())
-    total_ips  = 0
-    tally      = defaultdict(int)
+    schools = list(blocks_per_school.keys())
 
-    print(f"Processing {len(schools)} schools")
+    # Test cap — only process first N schools to estimate runtime
+    if test_cap:
+        schools = schools[:test_cap]
+        print(f"TEST MODE: capped at {test_cap} schools (out of {len(blocks_per_school)})")
+        print(f"Time this run and multiply up to estimate full runtime.")
+
+    # Filter out schools already done in a previous (interrupted) run
+    remaining = [s for s in schools if s not in completed]
+    print(f"Processing {len(remaining)} schools  ({len(completed)} already done, {len(schools) - len(remaining) - len(completed)} skipped by cap)")
+
+    total_ips = 0
+    tally     = defaultdict(int)
 
     # Step 3: For each school, expand its IP blocks and run DNS lookups in parallel
-    with open(output_file, "w", newline="", encoding="utf-8") as out_f:
+    # Append to existing file if resuming, write fresh if starting over
+    file_mode = "a" if completed else "w"
+    with open(output_file, file_mode, newline="", encoding="utf-8") as out_f:
         writer = csv.DictWriter(
             out_f,
             fieldnames=["ip_address", "school_name", "district_name", "hostname", "match_type"]
         )
-        writer.writeheader()
+        if not completed:
+            writer.writeheader()
         out_f.flush()
 
         with ThreadPoolExecutor(max_workers=WORKERS) as pool:
-            for idx, school in enumerate(schools, 1):
+            for idx, school in enumerate(remaining, 1):
                 keywords = get_keywords(school)
-                print(f"[{idx}/{len(schools)}] {school[:45]} ...", flush=True)
+                print(f"[{idx}/{len(remaining)}] {school[:45]} ...", flush=True)
 
                 # Expand each CIDR into individual IPs (IPv4 only)
                 ips = []
@@ -181,12 +214,20 @@ def run(input_file=INPUT_FILE, output_file=OUTPUT_FILE):
                     if done % 10000 == 0:
                         print(f"  ... {done}/{len(ips)} done", flush=True)
 
-                print(f"  finished school. total IPs checked: {total_ips}", flush=True)
+                print(f"  finished school. total IPs checked so far: {total_ips}", flush=True)
+
+                # Save progress — mark this school as done in the checkpoint file
+                with open(checkpoint_file, "a") as ckpt:
+                    ckpt.write(school + "\n")
 
     # Step 4: Print summary
     print(f"\nDone. Results written to {output_file}")
     print(f"match: {tally['match']}  partial: {tally['partial_match']}  "
           f"no_match: {tally['no_match']}  no_record: {tally['no_record']}")
+
+    if test_cap and len(remaining) > 0:
+        print(f"\nTEST MODE summary: processed {len(remaining)} schools, {total_ips} IPs checked.")
+        print(f"Full run has {len(blocks_per_school)} schools — scale up time accordingly.")
 
 
 if __name__ == "__main__":
