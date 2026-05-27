@@ -28,6 +28,7 @@ import phase3_confirm      as phase3
 import phase4_ripe_atlas   as phase4
 import analysis
 import verify_high_confidence as verify
+import check_probe_coverage   as probe_check
 
 # ── configuration ────────────────────────────────────────────────────────────
 
@@ -129,6 +130,10 @@ if __name__ == "__main__":
     header("Manual Verification (ARIN RDAP)")
     verify_files = {f"{r}km": paths(r)["phase3"] for r in RADII}
     verify.run(files=verify_files, output_file="data/verification_results.csv")
+
+    # Probe coverage — shows how many schools have RIPE Atlas probes nearby
+    header("RIPE Atlas Probe Coverage")
+    probe_check.run()
 
     header("ALL DONE")
     for radius in RADII:
