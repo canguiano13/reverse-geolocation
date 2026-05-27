@@ -8,35 +8,29 @@ PROVIDERS_FILE = "data/school_providers.csv"
 ASDB_FILE      = "data/2026-03_categorized_ases.csv"
 OUTPUT_FILE    = "data/phase3_confirmed.csv"
 
-# if the IP is owned by one of these, it's a hosting provider, not a school
 HOSTING_KEYWORDS = {
     "cloudflare", "google", "amazon", "aws", "microsoft",
     "azure", "fastly", "akamai", "digitalocean"
 }
 
-# noise words to strip before comparing company names
 GENERIC_TERMS = [
     r'\binc\b', r'\bllc\b', r'\bcorp\b', r'\bcorporation\b',
     r'\bco\b', r'\bltd\b', r'\bnetwork\b', r'\bnetworks\b',
     r'\bcommunications\b', r'\bservices\b', r'\btelecom\b', r'\bisp\b',
 ]
 
-# cache WHOIS results so we don't repeat lookups for IPs in the same block
 whois_cache = {}
 
 
-# load ASNs categorized as education from the Stanford ASdb dataset
 def load_edu_asns():
     edu_asns = set()
     try:
         with open(ASDB_FILE, newline="", encoding="utf-8") as f:
             reader = csv.DictReader(f)
             for row in reader:
-                # check all category columns — ASdb has up to 68, each split into Layer 1 and Layer 2
                 all_cats = " ".join(v for k, v in row.items() if "Category" in k and v).lower()
                 if "education" in all_cats or "research" in all_cats:
                     asn = str(row.get("ASN", "")).strip()
-                    # ASN values are formatted as "AS3255" — strip the prefix
                     if asn.upper().startswith("AS"):
                         asn = asn[2:]
                     if asn:
@@ -57,7 +51,6 @@ def normalize_org(name):
     return " ".join(name.split())
 
 
-# IPs sharing the first 3 octets usually have the same owner
 def get_24_prefix(ip):
     try:
         return str(ipaddress.IPv4Network(f"{ip}/24", strict=False).network_address)
@@ -81,7 +74,6 @@ def whois_lookup(ip):
     return data
 
 
-# check if the WHOIS owner is one of the ISPs that serves this school's area
 def fcc_match(school_name, norm_org, providers):
     allowed = providers.get(school_name, [])
     for provider in allowed:
@@ -91,7 +83,6 @@ def fcc_match(school_name, norm_org, providers):
     return False
 
 
-# score 0-3: dns match=+1, whois/edu match=+1, fcc match=+1
 def compute_confidence(rdns_match, whois_match, fcc_matched):
     score = sum([rdns_match, whois_match, fcc_matched])
     if score >= 3:
@@ -103,13 +94,12 @@ def compute_confidence(rdns_match, whois_match, fcc_matched):
     return score, label
 
 
-if __name__ == "__main__":
-    with open(INPUT_FILE, newline="", encoding="utf-8") as f:
+def run(input_file=INPUT_FILE, output_file=OUTPUT_FILE):
+    with open(input_file, newline="", encoding="utf-8") as f:
         rows = list(csv.DictReader(f))
 
     edu_asns = load_edu_asns()
 
-    # load ISP providers per school from fcc_get_providers.py output
     providers = {}
     try:
         with open(PROVIDERS_FILE, newline="", encoding="utf-8") as f:
@@ -123,7 +113,7 @@ if __name__ == "__main__":
 
     candidates = [r for r in rows if r["match_type"] in {"match", "partial_match"}]
     total = len(candidates)
-    print(f"Processing {total} IPs from {INPUT_FILE}")
+    print(f"Processing {total} IPs from {input_file}")
 
     results = []
 
@@ -144,6 +134,14 @@ if __name__ == "__main__":
         else:
             whois_match = is_edu or fcc_match(school, norm_org, providers)
             fcc_matched = bool(providers.get(school)) and fcc_match(school, norm_org, providers)
+
+        # defense-in-depth: out-of-state k12 hostnames cannot be NY schools
+        # (phase2 should have filtered these already, but this catches any edge cases)
+        hostname_l = row.get("hostname", "").lower()
+        m = re.search(r'\.k12\.([a-z]{2})\.us', hostname_l)
+        if m and m.group(1) != 'ny':
+            whois_match = False
+            fcc_matched = False
 
         rdns_match = rdns in ("match", "partial_match")
         score, confidence = compute_confidence(rdns_match, whois_match, fcc_matched)
@@ -170,7 +168,7 @@ if __name__ == "__main__":
         "ip_address", "school_name", "hostname", "phase2_match",
         "asn", "whois_org", "is_hosting", "whois_match", "fcc_match", "score", "confidence"
     ]
-    with open(OUTPUT_FILE, "w", newline="", encoding="utf-8") as f:
+    with open(output_file, "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames)
         writer.writeheader()
         writer.writerows(results)
@@ -178,5 +176,9 @@ if __name__ == "__main__":
     high   = sum(1 for r in results if r["confidence"] == "high")
     medium = sum(1 for r in results if r["confidence"] == "medium")
     low    = sum(1 for r in results if r["confidence"] == "low")
-    print(f"\nDone. Results written to {OUTPUT_FILE}")
+    print(f"\nDone. Results written to {output_file}")
     print(f"high: {high}  medium: {medium}  low: {low}")
+
+
+if __name__ == "__main__":
+    run()

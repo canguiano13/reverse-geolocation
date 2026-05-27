@@ -85,24 +85,24 @@ def write_summary(summary_rows, output_file):
     print(f"\nSummary written to {output_file}")
 
 
-if __name__ == "__main__":
-    with open(SCHOOLS_FILE, newline="", encoding="utf-8") as f:
+def run(input_file=INPUT_FILE, phase4_file=PHASE4_FILE,
+        schools_file=SCHOOLS_FILE, output_file=OUTPUT_FILE,
+        output_file_p4=OUTPUT_FILE_P4):
+
+    with open(schools_file, newline="", encoding="utf-8") as f:
         all_schools = [r["school_name"].strip() for r in csv.DictReader(f)]
 
-    # phase 3 analysis
-    with open(INPUT_FILE, newline="", encoding="utf-8") as f:
+    with open(input_file, newline="", encoding="utf-8") as f:
         phase3_rows = list(csv.DictReader(f))
 
     summary = summarize(phase3_rows, all_schools, "Phase 3 — Before RIPE Atlas Validation")
-    write_summary(summary, OUTPUT_FILE)
+    write_summary(summary, output_file)
 
-    # phase 4 analysis (only if the file exists)
-    if os.path.exists(PHASE4_FILE):
+    if os.path.exists(phase4_file):
         print("\n")
-        with open(PHASE4_FILE, newline="", encoding="utf-8") as f:
+        with open(phase4_file, newline="", encoding="utf-8") as f:
             phase4_rows = list(csv.DictReader(f))
 
-        # only count IPs that passed RIPE Atlas validation
         validated_rows = [r for r in phase4_rows if r.get("ripe_validated") == "yes"]
         removed = sum(1 for r in phase4_rows if r.get("ripe_validated") == "no")
         skipped = sum(1 for r in phase4_rows if r.get("ripe_validated") == "skipped")
@@ -110,7 +110,11 @@ if __name__ == "__main__":
         print(f"RIPE Atlas removed {removed} IPs  |  {skipped} skipped (no probes available)")
 
         summary_p4 = summarize(validated_rows, all_schools, "Phase 4 — After RIPE Atlas Validation")
-        write_summary(summary_p4, OUTPUT_FILE_P4)
+        write_summary(summary_p4, output_file_p4)
     else:
-        print(f"\nNote: {PHASE4_FILE} not found — skipping phase 4 analysis.")
+        print(f"\nNote: {phase4_file} not found — skipping phase 4 analysis.")
         print("Run phase4_ripe_atlas.py first to generate it.")
+
+
+if __name__ == "__main__":
+    run()

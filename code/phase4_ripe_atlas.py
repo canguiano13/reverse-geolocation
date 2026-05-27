@@ -11,14 +11,12 @@ OUTPUT_FILE  = "data/phase4_validated.csv"
 ATLAS_BASE  = "https://atlas.ripe.net/api/v2"
 HEADERS     = {"Authorization": f"Key {API_KEY}", "Content-Type": "application/json"}
 
-# speed of internet constant from the paper (4/9 * speed of light in km/ms)
 SOI_KM_PER_MS = (4 / 9) * (299792.458 / 1000)  # ~133.2 km/ms
-SOI_BUFFER_KM = 50  # extra buffer from the paper
+SOI_BUFFER_KM = 50
 
-NEAR_KM = 40   # probes within this range are considered "near"
-FAR_KM  = 100  # probes beyond this are considered "far"
+NEAR_KM = 40
+FAR_KM  = 100
 
-# only run RIPE Atlas on these confidence levels to save credits
 VALIDATE = {"high", "medium"}
 
 
@@ -31,7 +29,6 @@ def distance_km(lat1, lon1, lat2, lon2):
 
 
 def find_near_probes(lat, lon, limit=3):
-    """Find active RIPE Atlas probes within NEAR_KM of the school."""
     try:
         r = requests.get(f"{ATLAS_BASE}/probes/", params={
             "status": 1,
@@ -47,7 +44,6 @@ def find_near_probes(lat, lon, limit=3):
 
 
 def find_far_probes(lat, lon, limit=2):
-    """Find anchor probes that are at least FAR_KM away from the school."""
     try:
         r = requests.get(f"{ATLAS_BASE}/probes/", params={
             "status": 1,
@@ -67,7 +63,6 @@ def find_far_probes(lat, lon, limit=2):
                     p["_dist"] = d
                     far.append(p)
 
-        # prefer probes that are very far away
         far.sort(key=lambda x: x["_dist"], reverse=True)
         return far[:limit]
     except Exception as e:
@@ -76,7 +71,6 @@ def find_far_probes(lat, lon, limit=2):
 
 
 def create_ping(target_ip, probe_ids):
-    """Create a one-off ping measurement from the given probes to target_ip."""
     try:
         r = requests.post(f"{ATLAS_BASE}/measurements/", headers=HEADERS, timeout=15, json={
             "definitions": [{
@@ -104,7 +98,6 @@ def create_ping(target_ip, probe_ids):
 
 
 def fetch_results(msm_id, wait_s=180, poll_s=15):
-    """Poll for measurement results until they arrive or we time out."""
     url = f"{ATLAS_BASE}/measurements/{msm_id}/results/"
     deadline = time.time() + wait_s
     while time.time() < deadline:
@@ -121,7 +114,6 @@ def fetch_results(msm_id, wait_s=180, poll_s=15):
 
 
 def min_rtt(results, probe_ids):
-    """Extract the minimum avg RTT for a set of probe IDs."""
     rtts = []
     for res in results:
         if res.get("prb_id") in probe_ids:
@@ -132,33 +124,24 @@ def min_rtt(results, probe_ids):
 
 
 def soi_violation(far_rtt_ms, school_lat, school_lon, far_probe):
-    """
-    Returns True if the IP is provably closer to the far probe than to the school.
-    Uses the Speed of Internet (SoI) constraint from the paper:
-    if the IP can only be within (SoI * RTT) km of the far probe,
-    but the school is farther than that — the IP can't be at the school.
-    """
     coords = far_probe.get("geometry", {}).get("coordinates", [])
     if len(coords) != 2 or far_rtt_ms is None:
         return False
-
     fp_lat, fp_lon = coords[1], coords[0]
     d_far_to_school = distance_km(school_lat, school_lon, fp_lat, fp_lon)
     soi_bound = SOI_KM_PER_MS * far_rtt_ms
-
     return (soi_bound + SOI_BUFFER_KM) < d_far_to_school
 
 
-if __name__ == "__main__":
-    # load school coordinates
+def run(input_file=INPUT_FILE, schools_file=SCHOOLS_FILE, output_file=OUTPUT_FILE):
     school_coords = {}
-    with open(SCHOOLS_FILE, newline="", encoding="utf-8") as f:
+    with open(schools_file, newline="", encoding="utf-8") as f:
         for row in csv.DictReader(f):
             school_coords[row["school_name"].strip()] = (
                 float(row["latitude"]), float(row["longitude"])
             )
 
-    with open(INPUT_FILE, newline="", encoding="utf-8") as f:
+    with open(input_file, newline="", encoding="utf-8") as f:
         all_rows = list(csv.DictReader(f))
 
     to_validate = [r for r in all_rows if r["confidence"] in VALIDATE]
@@ -218,7 +201,6 @@ if __name__ == "__main__":
         near_rtt_val = min_rtt(msm_results, near_ids)
         far_rtt_val  = min_rtt(msm_results, far_ids)
 
-        # check if the IP is provably not at the school
         invalid = False
         if far_probes and far_rtt_val is not None:
             invalid = soi_violation(far_rtt_val, lat, lon, far_probes[0])
@@ -234,18 +216,21 @@ if __name__ == "__main__":
         row["ripe_validated"] = status
         results_out.append(row)
 
-        time.sleep(2)  # be polite to the API
+        time.sleep(2)
 
-    # pass low confidence rows through unchanged
     for r in skip_rows:
         r["ripe_validated"] = "not_run"
         results_out.append(r)
 
     fieldnames = list(all_rows[0].keys()) + ["ripe_validated"]
-    with open(OUTPUT_FILE, "w", newline="", encoding="utf-8") as f:
+    with open(output_file, "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames)
         writer.writeheader()
         writer.writerows(results_out)
 
-    print(f"\nDone. Results written to {OUTPUT_FILE}")
+    print(f"\nDone. Results written to {output_file}")
     print(f"valid={n_valid}  invalid={n_invalid}  skipped={n_skipped}")
+
+
+if __name__ == "__main__":
+    run()

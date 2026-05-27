@@ -10,9 +10,8 @@ INPUT_FILE  = "data/phase1_candidates.csv"
 OUTPUT_FILE = "data/phase2_filtered.csv"
 TIMEOUT     = 1.0
 WORKERS     = 50
-MAX_CIDRS   = 2000 #1000  # skip schools with too many IP blocks (usually dense urban areas)
+MAX_CIDRS   = 2000
 
-# words to ignore when pulling keywords out of a school name
 STOP_WORDS = {
     "a", "an", "the", "of", "and", "in", "at", "for",
     "school", "schools", "district", "unified", "elementary", "middle",
@@ -22,12 +21,12 @@ STOP_WORDS = {
     "north", "south", "east", "west",
 }
 
-# words in a hostname that suggest it belongs to a school
 K12_INDICATORS = {
     "k12", "school", "schools", "district", "unified", "elementary",
     "middle", "high", "sch", "schl",
     "isd", "usd", "cusd", "pusd",
     "acad", "academy",
+    "csd", "ufsd", "boces",
 }
 
 
@@ -36,7 +35,6 @@ def extract_keywords(name):
     return [t for t in cleaned.split() if t not in STOP_WORDS and len(t) >= 3]
 
 
-# get what hostname is registered to this IP
 def reverse_dns(ip):
     try:
         rev = dns.reversename.from_address(ip)
@@ -56,10 +54,25 @@ def has_k12_indicator(hostname):
 def classify(hostname, school_kws):
     if hostname is None:
         return "no_record"
-    if any(kw in hostname for kw in school_kws):
+
+    hostname_l = hostname.lower()
+
+    # precision fix 1: out-of-state k12 domains are never a match for NY schools
+    # ex: .k12.sc.us = South Carolina, .k12.nh.us = New Hampshire
+    m = re.search(r'\.k12\.([a-z]{2})\.us', hostname_l)
+    if m and m.group(1) != 'ny':
+        return "no_match"
+
+    # precision fix 2: require at least 2 school keywords to match
+    # prevents single-word false positives like "new" matching "New Hyde Park"
+    # or "howard" matching a printing company called Howard Press
+    matching = [kw for kw in school_kws if kw in hostname_l]
+    if len(matching) >= 2:
         return "match"
-    if has_k12_indicator(hostname):
+
+    if has_k12_indicator(hostname_l):
         return "partial_match"
+
     return "no_match"
 
 
@@ -69,11 +82,10 @@ def lookup(ip_str, school, school_kws):
     return {"ip_address": ip_str, "school_name": school, "district_name": "", "hostname": hostname or "", "match_type": match_type}
 
 
-if __name__ == "__main__":
-    with open(INPUT_FILE, newline="", encoding="utf-8") as f:
+def run(input_file=INPUT_FILE, output_file=OUTPUT_FILE):
+    with open(input_file, newline="", encoding="utf-8") as f:
         rows = list(csv.DictReader(f))
 
-    # count how many blocks each school has, skip ones with too many
     cidr_counts = defaultdict(int)
     for row in rows:
         cidr_counts[row["school_name"].strip()] += 1
@@ -82,7 +94,6 @@ if __name__ == "__main__":
     if skipped:
         print(f"Skipping {len(skipped)} schools with >{MAX_CIDRS} blocks")
 
-    # group CIDRs by school so we can process one school at a time
     by_school = defaultdict(list)
     for row in rows:
         school = row["school_name"].strip()
@@ -97,7 +108,7 @@ if __name__ == "__main__":
     counts    = defaultdict(int)
     completed = 0
 
-    with open(OUTPUT_FILE, "w", newline="", encoding="utf-8") as out_f:
+    with open(output_file, "w", newline="", encoding="utf-8") as out_f:
         writer = csv.DictWriter(out_f, fieldnames=["ip_address", "school_name", "district_name", "hostname", "match_type"])
         writer.writeheader()
         out_f.flush()
@@ -107,7 +118,6 @@ if __name__ == "__main__":
                 school_kws = extract_keywords(school)
                 print(f"[{s_idx}/{total_schools}] {school[:45]} ...", flush=True)
 
-                # expand this school's CIDRs into individual IPs (IPv4 only)
                 jobs = []
                 for cidr in by_school[school]:
                     try:
@@ -121,7 +131,6 @@ if __name__ == "__main__":
 
                 print(f"  expanding done: {len(jobs)} IPs to check", flush=True)
 
-                # submit only this school's IPs, wait for all, then move on
                 futures = {executor.submit(lookup, ip, school, school_kws): ip for ip in jobs}
                 school_done = 0
                 for future in as_completed(futures):
@@ -141,5 +150,9 @@ if __name__ == "__main__":
 
                 print(f"  done. total checked so far: {completed}", flush=True)
 
-    print(f"\nDone. Results written to {OUTPUT_FILE}")
+    print(f"\nDone. Results written to {output_file}")
     print(f"match: {counts['match']}  partial: {counts['partial_match']}  no_match: {counts['no_match']}  no_record: {counts['no_record']}")
+
+
+if __name__ == "__main__":
+    run()

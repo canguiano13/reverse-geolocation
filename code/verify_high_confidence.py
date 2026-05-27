@@ -112,9 +112,9 @@ def classify(ip, hostname, school_name, org):
 
     # known companies / non-school orgs
     company_keywords = [
-        "baker hughes", "howard press", "polaner", "webair", "mainstreet",
-        "zayo", "shorter university", "comcast", "verizon", "alter.net",
-        "lakeworth", "greenwood", "tamworth",
+        "baker hughes", "howard press", "howardpress", "polaner", "webair",
+        "newopportunitiesnow", "mainstreet", "zayo", "shorter university",
+        "comcast", "verizon", "alter.net", "lakeworth", "greenwood", "tamworth",
     ]
     for kw in company_keywords:
         if kw in org_l or kw in hostname_l:
@@ -130,12 +130,15 @@ def classify(ip, hostname, school_name, org):
     return "MANUAL_CHECK", f"org={org or 'unknown'}, hostname={hostname}"
 
 
-if __name__ == "__main__":
-    # collect unique (ip, hostname, school, run) combos — deduplicate by ip+hostname
-    seen      = {}   # (ip, hostname) → (school, run)
-    run_label = {}   # (ip, hostname) → run
+def run(files=None, output_file=OUTPUT_FILE):
+    if files is None:
+        files = FILES
 
-    for run, filepath in FILES.items():
+    # collect unique (ip, hostname, school, run) combos — deduplicate by ip+hostname
+    seen      = {}   # (ip, hostname) → school
+    run_label = {}   # (ip, hostname) → run label
+
+    for run_name, filepath in files.items():
         try:
             with open(filepath, newline="", encoding="utf-8") as f:
                 for row in csv.DictReader(f):
@@ -144,9 +147,8 @@ if __name__ == "__main__":
                     key = (row["ip_address"].strip(), row["hostname"].strip())
                     if key not in seen:
                         seen[key]      = row["school_name"].strip()
-                        run_label[key] = run
+                        run_label[key] = run_name
                     else:
-                        # appears in both — label as both
                         run_label[key] = "both"
         except FileNotFoundError:
             print(f"Warning: {filepath} not found, skipping")
@@ -185,7 +187,7 @@ if __name__ == "__main__":
     results.sort(key=lambda r: (order.get(r["verdict"], 9), r["matched_school"]))
 
     fieldnames = ["run", "ip_address", "matched_school", "hostname", "arin_org", "verdict", "reason"]
-    with open(OUTPUT_FILE, "w", newline="", encoding="utf-8") as f:
+    with open(output_file, "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames)
         writer.writeheader()
         writer.writerows(results)
@@ -194,9 +196,13 @@ if __name__ == "__main__":
     fp = sum(1 for r in results if r["verdict"] == "FALSE_POSITIVE")
     mc = sum(1 for r in results if r["verdict"] == "MANUAL_CHECK")
 
-    print(f"\nDone. Results written to {OUTPUT_FILE}")
+    print(f"\nDone. Results written to {output_file}")
     print(f"TRUE_POSITIVE : {tp}")
     print(f"FALSE_POSITIVE: {fp}")
     print(f"MANUAL_CHECK  : {mc}")
     if tp + fp > 0:
         print(f"Precision (excluding MANUAL_CHECK): {tp / (tp + fp):.1%}")
+
+
+if __name__ == "__main__":
+    run()
