@@ -10,7 +10,6 @@ FCC_DATA_FILES = [
     "data/bdc_36_FibertothePremises_fixed_broadband_D25_04may2026.csv",
 ]
 
-
 # find all ISPs serving the census tract a school is in
 # the first 11 digits of the 15-digit block code identify the census tract
 def get_providers(census_tract):

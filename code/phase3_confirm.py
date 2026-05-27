@@ -3,9 +3,9 @@ import re
 import ipaddress
 from ipwhois import IPWhois
 
-INPUT_FILE     = "data/phase2_filtered.csv"
+INPUT_FILE     = "data/phase2_filtered_20km.csv"
 PROVIDERS_FILE = "data/school_providers.csv"
-ASDB_FILE      = "data/2026-03_categorized_ases.csv"
+ASDB_FILE      = "data/filtered_asdb.csv"
 OUTPUT_FILE    = "data/phase3_confirmed.csv"
 
 # if the IP is owned by one of these, it's a hosting provider, not a school
@@ -25,22 +25,19 @@ GENERIC_TERMS = [
 whois_cache = {}
 
 
-# load ASNs categorized as education from the Stanford ASdb dataset
+# load ASNs from prefiltered ASdb dataset (already filtered to education/research)
 def load_edu_asns():
     edu_asns = set()
     try:
         with open(ASDB_FILE, newline="", encoding="utf-8") as f:
             reader = csv.DictReader(f)
             for row in reader:
-                # check all category columns — ASdb has up to 68, each split into Layer 1 and Layer 2
-                all_cats = " ".join(v for k, v in row.items() if "Category" in k and v).lower()
-                if "education" in all_cats or "research" in all_cats:
-                    asn = str(row.get("ASN", "")).strip()
-                    # ASN values are formatted as "AS3255" — strip the prefix
-                    if asn.upper().startswith("AS"):
-                        asn = asn[2:]
-                    if asn:
-                        edu_asns.add(asn)
+                asn = str(row.get("ASN", "")).strip()
+                # ASN values are formatted as "AS3255" — strip the prefix
+                if asn.upper().startswith("AS"):
+                    asn = asn[2:]
+                if asn:
+                    edu_asns.add(asn)
         print(f"Loaded {len(edu_asns)} educational ASNs from {ASDB_FILE}")
     except FileNotFoundError:
         print(f"Warning: {ASDB_FILE} not found, educational ASN check disabled")
