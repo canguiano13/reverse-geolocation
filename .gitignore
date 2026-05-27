@@ -1,9 +1,10 @@
 # large data files, do not push to GitHub
+code/data/inputs/GeoLite2-City.mmdb
+code/data/inputs/dbip-city-lite.mmdb
 code/data/inputs/bdc_36_Cable_fixed_broadband_D25_04may2026.csv
 code/data/inputs/bdc_36_FibertothePremises_fixed_broadband_D25_04may2026.csv
-code/data/outputs/phase1_candidates.csv
-code/data/inputs/GeoLite2-City.mmdb
 code/data/inputs/2026-03_categorized_ases.csv
+code/data/outputs/phase1_candidates.csv
 
 .DS_Store
 # Byte-compiled / optimized / DLL files
@@ -224,3 +225,4 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
