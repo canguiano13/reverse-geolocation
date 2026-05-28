@@ -33,7 +33,7 @@ SOI_BUFFER_KM = 50    # extra slack added to the SoI bound (from the paper)
 NEAR_KM       = 40    # probes within this range count as "near" the school
 FAR_KM        = 100   # probes beyond this range count as "far"
 
-VALIDATE = {"high", "medium"}   # only ping these confidence levels to save credits
+VALIDATE = {"high"}   # only ping high confidence IPs to save credits (~30 credits/IP)
 
 
 def distance_km(lat1, lon1, lat2, lon2):
@@ -230,15 +230,26 @@ def run(input_file=INPUT_FILE, schools_file=SCHOOLS_FILE, output_file=OUTPUT_FIL
         near_rtt    = min_rtt_for_probes(ping_results, near_ids)
         far_rtt     = min_rtt_for_probes(ping_results, far_ids)
 
-        # Check if the IP is provably in the wrong location
-        invalid = (far_probes and far_rtt is not None
-                   and is_soi_violation(far_rtt, lat, lon, far_probes[0]))
+        print(f"    near_rtt={near_rtt}ms  far_rtt={far_rtt}ms", flush=True, end="")
+
+        # If neither probe got a response, we have no data — skip rather than assume yes
+        if near_rtt is None and far_rtt is None:
+            print(f"  → skipped (no ping response)")
+            row["ripe_validated"] = "skipped"
+            output_rows.append(row)
+            n_skipped += 1
+            time.sleep(2)
+            continue
+
+        # Check if the IP is provably in the wrong location via SoI violation
+        invalid = bool(far_probes and far_rtt is not None
+                       and is_soi_violation(far_rtt, lat, lon, far_probes[0]))
 
         status = "no" if invalid else "yes"
-        n_invalid += invalid
-        n_valid   += not invalid
+        n_invalid += int(invalid)
+        n_valid   += int(not invalid)
 
-        print(f"    near_rtt={near_rtt}ms  far_rtt={far_rtt}ms  → {status}")
+        print(f"  → {status}")
         row["ripe_validated"] = status
         output_rows.append(row)
         time.sleep(2)

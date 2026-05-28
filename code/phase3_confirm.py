@@ -1,13 +1,15 @@
 """
 Phase 3 — WHOIS / ASN Confirmation
 -------------------------------------
-Takes the DNS matches from phase 2 and scores each IP on three signals:
-  1. DNS match    — the hostname contains the school name or a k12 keyword
-  2. WHOIS match  — the IP is registered to an educational network, OR
-                    the ISP serving it is known to serve that school's area (FCC data)
-  3. FCC match    — the ISP in the FCC broadband map matches the school's location
+Takes the DNS matches from phase 2 and scores each IP on four signals:
+  1. DNS match      — the hostname contains the school name or a k12 keyword
+  2. NY K12 domain  — hostname is in *.k12.ny.us (NY state-managed school domain)
+                      This is the strongest possible signal — state-assigned PTR records
+  3. WHOIS match    — the IP is registered to an educational network, OR
+                      the ISP serving it is known to serve that school's area (FCC data)
+  4. FCC match      — the ISP in the FCC broadband map matches the school's location
 
-Score 3 → high confidence, 2 → medium, 1 → low.
+Score 3+ → high confidence, 2 → medium, 1 → low.
 IPs owned by hosting providers (Cloudflare, AWS, etc.) are flagged and scored down.
 """
 
@@ -115,9 +117,17 @@ def org_matches_provider(org_name, allowed_providers):
 
 def score_ip(hostname, asn, org_name, school_name, edu_asns, fcc_providers):
     """
-    Score an IP on three signals and return (score, confidence_label).
+    Score an IP on four signals and return (score, confidence_label).
     Also returns whether it's a hosting provider IP (those are scored down).
+
+    Signal breakdown:
+      dns_match     — Phase 2 found a k12 keyword or school name in the PTR record
+      ny_k12_domain — hostname is in *.k12.ny.us (NY state-assigned school domain)
+                      This is the strongest signal: state-managed, unambiguous.
+      whois_match   — educational ASN or known local ISP
+      fcc_match     — ISP specifically listed in FCC data for this school's area
     """
+    h = hostname.lower()
     org_lower = org_name.lower()
 
     # Check if this IP belongs to a hosting/CDN provider — not a school
@@ -126,29 +136,31 @@ def score_ip(hostname, asn, org_name, school_name, edu_asns, fcc_providers):
     # Signal 1: DNS match (always true here since phase 2 already filtered)
     dns_match = True
 
-    # Signal 2: WHOIS/ASN match — educational ASN or known local ISP
+    # Signal 2: NY K12 domain — hostname is in *.k12.ny.us
+    # This is NY's state-managed school domain. Any IP with a PTR in this domain
+    # is definitively a NY school IP — no school-name matching required.
+    state_match = re.search(r'\.k12\.([a-z]{2})\.us', h)
+    if state_match and state_match.group(1) != 'ny':
+        # Out-of-state k12 domain — reject entirely
+        return 0, "low", is_hosting, False, False
+    ny_k12_domain = bool(state_match and state_match.group(1) == 'ny')
+
+    # Signal 3: WHOIS/ASN match — educational ASN or known local ISP
     if is_hosting:
         whois_match = False
     else:
-        is_edu_asn  = str(asn) in edu_asns
+        is_edu_asn   = str(asn) in edu_asns
         allowed_isps = fcc_providers.get(school_name, [])
-        isp_match   = org_matches_provider(org_name, allowed_isps)
-        whois_match = is_edu_asn or isp_match
+        isp_match    = org_matches_provider(org_name, allowed_isps)
+        whois_match  = is_edu_asn or isp_match
 
-    # Signal 3: FCC match — ISP specifically listed for this school's area
+    # Signal 4: FCC match — ISP specifically listed for this school's area
     if is_hosting or not fcc_providers.get(school_name):
         fcc_match = False
     else:
         fcc_match = org_matches_provider(org_name, fcc_providers[school_name])
 
-    # Defense: out-of-state k12 hostnames override all signals
-    # (phase 2 should have caught these, but just in case)
-    state_match = re.search(r'\.k12\.([a-z]{2})\.us', hostname.lower())
-    if state_match and state_match.group(1) != 'ny':
-        whois_match = False
-        fcc_match   = False
-
-    score = sum([dns_match, whois_match, fcc_match])
+    score = sum([dns_match, ny_k12_domain, whois_match, fcc_match])
     label = "high" if score >= 3 else "medium" if score >= 2 else "low"
 
     return score, label, is_hosting, whois_match, fcc_match
@@ -173,18 +185,21 @@ def run(input_file=INPUT_FILE, output_file=OUTPUT_FILE):
         school = row["school_name"].strip()
 
         asn, org_name = whois_lookup(ip)
+        hostname = row.get("hostname", "")
         score, confidence, is_hosting, whois_match, fcc_match = score_ip(
-            row.get("hostname", ""), asn, org_name, school, edu_asns, fcc_providers
+            hostname, asn, org_name, school, edu_asns, fcc_providers
         )
+        ny_k12 = bool(re.search(r'\.k12\.ny\.us', hostname.lower()))
 
         results.append({
             "ip_address":   ip,
             "school_name":  school,
-            "hostname":     row.get("hostname", ""),
+            "hostname":     hostname,
             "phase2_match": row["match_type"],
             "asn":          asn,
             "whois_org":    org_name,
             "is_hosting":   "yes" if is_hosting else "no",
+            "ny_k12_domain":"yes" if ny_k12 else "no",
             "whois_match":  "yes" if whois_match else "no",
             "fcc_match":    "yes" if fcc_match else "no",
             "score":        score,
@@ -199,7 +214,8 @@ def run(input_file=INPUT_FILE, output_file=OUTPUT_FILE):
 
     fieldnames = [
         "ip_address", "school_name", "hostname", "phase2_match",
-        "asn", "whois_org", "is_hosting", "whois_match", "fcc_match", "score", "confidence",
+        "asn", "whois_org", "is_hosting", "ny_k12_domain", "whois_match", "fcc_match",
+        "score", "confidence",
     ]
     with open(output_file, "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames)

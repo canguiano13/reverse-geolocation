@@ -6,6 +6,10 @@ and checks what hostname is registered to each one (PTR record).
 Keeps only IPs whose hostname contains the school's name or a K-12 keyword.
 Uses 50 parallel threads so DNS lookups run simultaneously instead of one-by-one.
 
+Probe-first optimization: before expanding a /24 block to 254 IPs, we check
+just the first IP. If that probe returns no k12 hostname, we skip the entire
+block. This reduces DNS lookups by ~100x since most blocks are not school networks.
+
 Checkpointing: progress is saved after each school. If the run is interrupted,
 restart and it picks up where it left off instead of starting over.
 
@@ -106,6 +110,28 @@ def classify(hostname, keywords):
     return "no_match"
 
 
+def probe_block(cidr, keywords):
+    """
+    Check just the first usable IP of a CIDR block.
+    Returns True if it looks like a school network (k12 indicator or name match).
+    Used to skip entire blocks that clearly aren't school networks — avoids
+    expanding 254 IPs for blocks that would all return no_match anyway.
+    """
+    try:
+        net = ipaddress.ip_network(cidr, strict=False)
+        if not isinstance(net, ipaddress.IPv4Network):
+            return False
+        hosts = list(net.hosts())
+        if not hosts:
+            return False
+        hostname = reverse_dns(str(hosts[0]))
+        if hostname is None:
+            return False
+        return classify(hostname, keywords) in ("match", "partial_match")
+    except Exception:
+        return False
+
+
 def check_ip(ip, school_name, keywords):
     """Run reverse DNS on one IP and classify the result. Runs in a thread."""
     hostname   = reverse_dns(ip)
@@ -185,9 +211,24 @@ def run(input_file=INPUT_FILE, output_file=OUTPUT_FILE, test_cap=None, force_fre
                 keywords = get_keywords(school)
                 print(f"[{idx}/{len(remaining)}] {school[:45]} ...", flush=True)
 
-                # Expand each CIDR into individual IPs (IPv4 only)
+                # Probe-first: check one IP per block before expanding.
+                # Blocks whose first IP has no k12 hostname are skipped entirely —
+                # saves ~100x DNS lookups vs expanding every block blindly.
+                all_cidrs = blocks_per_school[school]
+                probe_futures = {
+                    pool.submit(probe_block, cidr, keywords): cidr
+                    for cidr in all_cidrs
+                }
+                promising_cidrs = []
+                for future in as_completed(probe_futures):
+                    if future.result():
+                        promising_cidrs.append(probe_futures[future])
+
+                print(f"  {len(promising_cidrs)}/{len(all_cidrs)} blocks passed probe filter", flush=True)
+
+                # Expand only the promising blocks into individual IPs
                 ips = []
-                for cidr in blocks_per_school[school]:
+                for cidr in promising_cidrs:
                     try:
                         net = ipaddress.ip_network(cidr, strict=False)
                         if isinstance(net, ipaddress.IPv4Network):

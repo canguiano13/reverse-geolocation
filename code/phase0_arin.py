@@ -23,32 +23,41 @@ import requests
 
 OUTPUT_FILE = "data/outputs/phase0_arin.csv"
 HEADERS     = {"Accept": "application/json"}
-SLEEP       = 0.4   # seconds between ARIN API calls — be polite
+SLEEP       = 0.8   # seconds between ARIN API calls — be polite (higher = less rate limiting)
+RETRY       = 3     # number of retries on failure
 
 # Search keywords and whether they are NY-specific.
 # NY-specific terms (UFSD, BOCES) don't need state filtering.
 # Generic terms (board of education) do — we check via API.
 KEYWORDS = [
-    ("union free school",       True),   # (search term, ny_specific)
-    ("boces",                   True),
-    ("central school district", False),
-    ("city school district",    False),
-    ("board of education",      False),
+    ("union free school",        True),   # (search term, ny_specific)
+    ("boces",                    True),
+    ("enlarged city school",     True),   # NY pattern: "Buffalo Enlarged City School District"
+    ("central school district",  False),
+    ("city school district",     False),
+    ("board of education",       False),
+    ("common school district",   False),
 ]
 
 
 def arin_get(url):
-    """GET a URL from ARIN's REST API. Returns parsed JSON or None."""
-    try:
-        r = requests.get(url, headers=HEADERS, timeout=15)
-        return r.json() if r.status_code == 200 else None
-    except Exception:
-        return None
+    """GET a URL from ARIN's REST API. Retries on failure to handle rate limiting."""
+    for attempt in range(RETRY):
+        try:
+            r = requests.get(url, headers=HEADERS, timeout=15)
+            if r.status_code == 200:
+                return r.json()
+            if r.status_code == 429:   # rate limited — wait longer and retry
+                time.sleep(5 * (attempt + 1))
+        except Exception:
+            pass
+        time.sleep(SLEEP * (attempt + 1))
+    return None
 
 
 def search_orgs(keyword):
     """Return all ARIN orgs whose name contains keyword."""
-    data = arin_get(f"https://whois.arin.net/rest/orgs;name=*{keyword.replace(' ', '+')}*")
+    data = arin_get(f"https://whois.arin.net/rest/orgs;name=*{keyword.replace(' ', '%20')}*")
     if not data:
         return []
     orgs = data.get("orgs", {}).get("orgRef", [])
@@ -56,10 +65,13 @@ def search_orgs(keyword):
 
 
 def is_ny_org(handle):
-    """Return True if this ARIN org is registered in New York state."""
+    """
+    Return True if this ARIN org is registered in New York state.
+    Returns None if the API call failed (caller should decide what to do).
+    """
     data = arin_get(f"https://whois.arin.net/rest/org/{handle}")
     if not data:
-        return False
+        return None   # unknown — API failed, don't discard
     org   = data.get("org", {})
     state = (org.get("iso3166-2") or {}).get("$", "")
     if not state:
@@ -119,10 +131,13 @@ def run(output_file=OUTPUT_FILE):
                 continue
             seen_orgs.add(handle)
 
-            # For non-NY-specific keywords, verify this org is in New York
+            # For non-NY-specific keywords, verify this org is in New York.
+            # If the API call fails (None), keep the org — don't silently discard.
             if not ny_specific:
-                if not is_ny_org(handle):
+                ny = is_ny_org(handle)
+                if ny is False:   # confirmed non-NY
                     continue
+                # ny is True (confirmed NY) or None (unknown) — proceed
                 time.sleep(SLEEP)
 
             # Get all IP blocks registered to this org
