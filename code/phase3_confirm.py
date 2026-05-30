@@ -9,7 +9,7 @@ Takes the DNS matches from phase 2 and scores each IP on four signals:
                       the ISP serving it is known to serve that school's area (FCC data)
   4. FCC match      — the ISP in the FCC broadband map matches the school's location
 
-Score 3+ -> high confidence, 2 -> medium, 1 -> low.
+Score 3+ high confidence, 2 medium, 1 low.
 IPs owned by hosting providers (Cloudflare, AWS, etc.) are flagged and scored down.
 """
 
@@ -188,7 +188,7 @@ def score_ip(hostname, asn, org_name, school_name, edu_asns, fcc_providers):
     # *.k12.ny.us is a NY State-managed DNS zone — only actual NY school districts
     # are delegated subdomains. An IP with a PTR in that zone is definitively a NY
     # school IP regardless of whether the transit ISP is "educational".
-    # -> Lower the high-confidence threshold to 2 when ny_k12_domain is confirmed.
+    # Lower the high-confidence threshold to 2 when ny_k12_domain is confirmed.
     if ny_k12_domain:
         label = "high" if score >= 2 else "medium"
     else:

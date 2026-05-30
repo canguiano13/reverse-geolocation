@@ -144,7 +144,7 @@ def run(output_file=OUTPUT_FILE):
         writer.writerows(results)
 
     n_orgs = len({r["org_handle"] for r in results})
-    print(f"\nDone. {len(results)} IP blocks from {n_orgs} NY school organizations -> {output_file}")
+    print(f"\nDone. {len(results)} IP blocks from {n_orgs} NY school organizations {output_file}")
 
 
 if __name__ == "__main__":

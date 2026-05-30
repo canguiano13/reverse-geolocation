@@ -22,11 +22,11 @@ import phase1_geo_lookup       as phase1
 import phase2_dns_lookup       as phase2
 import phase3_confirm          as phase3
 import phase4_ripe_atlas       as phase4
-import fix_attribution
-import analysis
-import combined_summary
-import verify_high_confidence  as verify
-import check_probe_coverage    as probe_check
+import phase3b_fix_attribution  as fix_attribution
+import post1_analysis           as analysis
+import post2_combined_summary   as combined_summary
+import post3_verify             as verify
+import post5_probe_coverage     as probe_check
 
 RADII            = [5, 10, 20, 30]
 SCHOOLS_FILE     = "data/inputs/metro_schools_nyc.csv"
@@ -69,7 +69,7 @@ def merge_candidates(arin_file, geo_file, output_file):
         writer = csv.DictWriter(f, fieldnames=["cidr", "school_name"])
         writer.writeheader()
         writer.writerows(rows)
-    print(f"Merged candidates: {len(rows)} total blocks -> {output_file}")
+    print(f"Merged candidates: {len(rows)} total blocks {output_file}")
 
 
 if __name__ == "__main__":
@@ -79,7 +79,7 @@ if __name__ == "__main__":
     target = "data/outputs/phase1_candidates_10km.csv"
     if not os.path.exists(target) and os.path.exists(bare):
         shutil.copy(bare, target)
-        print(f"Migrated {bare} -> {target}")
+        print(f"Migrated {bare} {target}")
 
     # Phase 0 — ARIN discovery (runs once, not per radius)
     run_phase0 = FORCE_RERUN_FROM is not None and 0 >= FORCE_RERUN_FROM or not os.path.exists(PHASE0_FILE)

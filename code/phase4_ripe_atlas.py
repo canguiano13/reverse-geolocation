@@ -160,7 +160,7 @@ def is_soi_violation(far_rtt_ms, school_lat, school_lon, far_probe):
     soi_max_distance_km  = SOI_KM_PER_MS * far_rtt_ms + SOI_BUFFER_KM
 
     # If IP must be within soi_max_distance_km of far probe,
-    # but far probe is farther than that from the school -> IP can't be at the school
+    # but far probe is farther than that from the school IP can't be at the school
     return soi_max_distance_km < far_to_school_km
 
 
@@ -255,7 +255,7 @@ def run(input_file=INPUT_FILE, schools_file=SCHOOLS_FILE, output_file=OUTPUT_FIL
 
         # If neither probe got a response, we have no data — skip rather than assume yes
         if near_rtt is None and far_rtt is None:
-            print(f"  -> skipped (no ping response)")
+            print(f"  skipped (no ping response)")
             row["ripe_validated"] = "skipped"
             output_rows.append(row)
             n_skipped += 1
@@ -270,7 +270,7 @@ def run(input_file=INPUT_FILE, schools_file=SCHOOLS_FILE, output_file=OUTPUT_FIL
         n_invalid += int(invalid)
         n_valid   += int(not invalid)
 
-        print(f"  -> {status}")
+        print(f"  {status}")
         row["ripe_validated"] = status
         output_rows.append(row)
         time.sleep(2)

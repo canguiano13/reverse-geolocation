@@ -60,4 +60,4 @@ if __name__ == "__main__":
         writer.writeheader()
         writer.writerows(results)
 
-    print(f"\nDone  {OUTPUT_FILE}")
+    print(f"\nDone {OUTPUT_FILE}")

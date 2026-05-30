@@ -105,7 +105,7 @@ def run(input_file=INPUT_FILE, output_file=OUTPUT_FILE, n=N_SCHOOLS):
     rng     = random.Random(RANDOM_SEED)
     grid    = build_grid(schools)
     sampled = sample_grid(grid, n, rng)
-    sampled.sort(key=lambda s: -safe_lat(s))   # north / south
+    sampled.sort(key=lambda s: -safe_lat(s))   # north south
 
     with open(output_file, "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames)
@@ -121,7 +121,7 @@ def run(input_file=INPUT_FILE, output_file=OUTPUT_FILE, n=N_SCHOOLS):
         count  = sum(1 for s in sampled if lat_lo <= safe_lat(s) < lat_hi)
         print(f"  {lat_hi:.2f}-{lat_lo:.2f}N  {count:3d}  {'#' * count}")
 
-    print(f"\nDone. {len(sampled)} schools -> {output_file}")
+    print(f"\nDone. {len(sampled)} schools {output_file}")
     return sampled
 
 

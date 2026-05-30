@@ -23,7 +23,7 @@ INPUT_FILE   = "data/outputs/phase3_confirmed_10km.csv"    # default for standal
 SCHOOLS_FILE = "data/inputs/gigamaps_schools_ny.csv"
 OUTPUT_FILE  = "data/outputs/phase3_reattributed_10km.csv" # default for standalone use
 
-# Manual mappings for all known district codes -> search term for school list.
+# Manual mappings for all known district codes search term for school list.
 # We know all 8 codes from the data, so map them all explicitly.
 # Value = substring to search for in school names (case-insensitive).
 MANUAL_MAPPINGS = {
@@ -36,8 +36,8 @@ MANUAL_MAPPINGS = {
     "liberty":          "Liberty",
     "hackley":          "Hackley",
     # Compound codes: no spaces so find_best_match can't split them — map explicitly.
-    # Code is the subdomain before .k12.ny.us (e.g. halfhollowhills.k12.ny.us -> "halfhollowhills")
-    "halfhollowhills":  "Half Hollow Hills High School",    # -> Half Hollow Hills High School East/West
+    # Code is the subdomain before .k12.ny.us (e.g. halfhollowhills.k12.ny.us "halfhollowhills")
+    "halfhollowhills":  "Half Hollow Hills High School",    # Half Hollow Hills High School East/West
     "hhh":              "Half Hollow Hills High School",    # alternate code for same district
     "northshore":       "Sea Cliff School",                 # North Shore CSD — unique identifier avoids PS 25 false match
     "westhempstead":    "West Hempstead High School",       # West Hempstead UFSD
@@ -61,7 +61,7 @@ DISTRICT_FLAGS = {
 # is an obscure school name, map it to a more recognisable district-level name.
 # The search anchor (in MANUAL_MAPPINGS) stays unchanged; only the output label changes.
 DISPLAY_NAMES = {
-    "Sea Cliff School": "North Shore High School",  # northshore.k12.ny.us -> North Shore CSD
+    "Sea Cliff School": "North Shore High School",  # northshore.k12.ny.us North Shore CSD
                                                     # Sea Cliff is the unique anchor; High School
                                                     # is the recognisable district identifier
 }
@@ -70,9 +70,9 @@ DISPLAY_NAMES = {
 def extract_district_code(hostname):
     """
     Pull the district identifier from a *.k12.ny.us hostname.
-    e.g. tech.scarsdaleschools.k12.ny.us -> 'scarsdaleschools'
-         mwcsd-209-222-32-25.mw.k12.ny.us -> 'mw'
-         bayshore.k12.ny.us -> 'bayshore'
+    e.g. tech.scarsdaleschools.k12.ny.us 'scarsdaleschools'
+         mwcsd-209-222-32-25.mw.k12.ny.us 'mw'
+         bayshore.k12.ny.us 'bayshore'
     """
     m = re.search(r'([^.]+)\.k12\.ny\.us', hostname.lower())
     return m.group(1) if m else None
@@ -118,7 +118,7 @@ def run(input_file=INPUT_FILE, schools_file=SCHOOLS_FILE, output_file=OUTPUT_FIL
                         if r["school_name"].strip().lower() != "name unknown"]
     print(f"Loaded {len(school_names)} schools for matching")
 
-    # Build a cache: district_code -> best matching school name
+    # Build a cache: district_code best matching school name
     code_cache = {}
 
     # Read phase 3 results
@@ -139,9 +139,9 @@ def run(input_file=INPUT_FILE, schools_file=SCHOOLS_FILE, output_file=OUTPUT_FIL
                 matched = find_best_match(code, school_names)
                 code_cache[code] = matched
                 if matched:
-                    print(f"  '{code}' -> '{matched}'")
+                    print(f"  '{code}' '{matched}'")
                 else:
-                    print(f"  '{code}' -> no match found, keeping original")
+                    print(f"  '{code}' no match found, keeping original")
 
             matched_name = code_cache[code]
             row["geo_school"]        = row["school_name"]   # preserve original

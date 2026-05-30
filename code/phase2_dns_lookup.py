@@ -219,7 +219,7 @@ def run(input_file=INPUT_FILE, output_file=OUTPUT_FILE, test_cap=None, force_fre
                 with open(checkpoint_file, "a") as ckpt:
                     ckpt.write(school + "\n")
 
-    print(f"\nDone -> {output_file}")
+    print(f"\nDone {output_file}")
     print(f"match: {tally['match']}  partial: {tally['partial_match']}  "
           f"no_match: {tally['no_match']}  no_record: {tally['no_record']}")
 

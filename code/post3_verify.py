@@ -140,7 +140,7 @@ def run(files=None, output_file=OUTPUT_FILE):
 
         org, country = arin_cache[ip]
         verdict, reason = classify(ip, hostname, school, org)
-        print(f"-> {verdict}")
+        print(f"{verdict}")
 
         results.append({
             "run":            run_label[(ip, hostname)],
@@ -165,7 +165,7 @@ def run(files=None, output_file=OUTPUT_FILE):
     tp = sum(1 for r in results if r["verdict"] == "TRUE_POSITIVE")
     fp = sum(1 for r in results if r["verdict"] == "FALSE_POSITIVE")
     mc = sum(1 for r in results if r["verdict"] == "MANUAL_CHECK")
-    print(f"\nDone -> {output_file}")
+    print(f"\nDone {output_file}")
     print(f"TRUE_POSITIVE: {tp}  FALSE_POSITIVE: {fp}  MANUAL_CHECK: {mc}")
     if tp + fp > 0:
         print(f"Precision: {tp / (tp + fp):.1%}")
