@@ -1,14 +1,13 @@
 """
 Probe Coverage Check
----------------------
-For each school in our sample, counts how many active RIPE Atlas probes
-are within 40 km. Saves results to data/probe_coverage.csv.
 
-Run this once to generate the coverage table for the paper.
+For each school in the sample, count how many active RIPE Atlas probes are
+within 40 km. Used in the paper to show validation coverage.
+
+Output: data/outputs/probe_coverage.csv
 """
 
 import csv
-import math
 import time
 import requests
 
@@ -31,40 +30,31 @@ def run():
 
         try:
             r = requests.get("https://atlas.ripe.net/api/v2/probes/", timeout=10, params={
-                "status":    1,
-                "radius":    f"{lat},{lon}:{NEAR_KM}",
-                "fields":    "id",
-                "page_size": 1,   # we only need the count, not the actual probes
+                "status": 1, "radius": f"{lat},{lon}:{NEAR_KM}", "fields": "id", "page_size": 1,
             })
             count = r.json().get("count", 0)
         except Exception:
             count = 0
 
-        has_probes = "yes" if count > 0 else "no"
         results.append({
-            "school_name": name,
-            "latitude":    lat,
-            "longitude":   lon,
+            "school_name":        name,
+            "latitude":           lat,
+            "longitude":          lon,
             "probes_within_40km": count,
-            "has_probes":  has_probes,
+            "has_probes":         "yes" if count > 0 else "no",
         })
-
-        marker = "✓" if count > 0 else "✗"
-        print(f"[{i:3}/{len(schools)}] {marker} {name[:50]:<50}  {count} probes")
+        print(f"[{i:3}/{len(schools)}] {'✓' if count > 0 else '✗'} {name[:50]:<50}  {count} probes")
         time.sleep(0.15)
 
-    # Save to CSV
     with open(OUTPUT_FILE, "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=["school_name", "latitude", "longitude",
                                                "probes_within_40km", "has_probes"])
         writer.writeheader()
         writer.writerows(results)
 
-    # Summary
     covered = sum(1 for r in results if r["has_probes"] == "yes")
-    total   = len(results)
-    print(f"\nDone. Results written to {OUTPUT_FILE}")
-    print(f"Schools with probes within {NEAR_KM} km: {covered}/{total} ({covered/total:.0%})")
+    print(f"\nDone {OUTPUT_FILE}")
+    print(f"Schools with probes within {NEAR_KM} km: {covered}/{len(results)} ({covered/len(results):.0%})")
 
 
 if __name__ == "__main__":

@@ -1,30 +1,35 @@
+"""
+FCC Provider Lookup
+
+For each school's census block, find which ISPs offer broadband service there.
+Uses FCC broadband deployment data (download for NY from broadbandmap.fcc.gov).
+
+Input:  data/school_blocks.csv   (from fcc_get_blocks.py)
+Output: data/school_providers.csv
+"""
+
 import csv
 import pandas as pd
 
 INPUT_FILE  = "data/school_blocks.csv"
 OUTPUT_FILE = "data/school_providers.csv"
 
-# download these from https://broadbandmap.fcc.gov/home → Data Downloads → select New York
+# FCC broadband deployment CSVs for New York state
 FCC_DATA_FILES = [
     "data/bdc_36_Cable_fixed_broadband_D25_04may2026.csv",
     "data/bdc_36_FibertothePremises_fixed_broadband_D25_04may2026.csv",
 ]
 
 
-# find all ISPs serving the census tract a school is in
-# the first 11 digits of the 15-digit block code identify the census tract
 def get_providers(census_tract):
+    """Return all ISP brand names serving a census tract (first 11 digits of block code)."""
     providers = set()
     for file_path in FCC_DATA_FILES:
         try:
-            df = pd.read_csv(
-                file_path,
-                usecols=["block_geoid", "brand_name"],
-                dtype={"block_geoid": str, "brand_name": str}
-            )
+            df = pd.read_csv(file_path, usecols=["block_geoid", "brand_name"],
+                             dtype={"block_geoid": str, "brand_name": str})
             matches = df[df["block_geoid"].str.startswith(census_tract, na=False)]
-            for brand in matches["brand_name"].dropna().unique():
-                providers.add(brand)
+            providers.update(matches["brand_name"].dropna().unique())
         except FileNotFoundError:
             print(f"Warning: {file_path} not found, skipping")
     return list(providers)
@@ -46,8 +51,7 @@ if __name__ == "__main__":
             print(f"{i}/{len(schools)}  {name[:45]:<45}  no block code")
             continue
 
-        tract     = block[:11]
-        providers = get_providers(tract)
+        providers = get_providers(block[:11])   # first 11 digits = census tract
         results.append({"school_name": name, "providers": "|".join(providers)})
         print(f"{i}/{len(schools)}  {name[:45]:<45}  {len(providers)} providers")
 
@@ -56,4 +60,4 @@ if __name__ == "__main__":
         writer.writeheader()
         writer.writerows(results)
 
-    print(f"\nDone. Saved to {OUTPUT_FILE}")
+    print(f"\nDone  {OUTPUT_FILE}")

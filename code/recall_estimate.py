@@ -5,10 +5,10 @@ Purpose: estimate RIG recall. For each ARIN-registered district, probe a
 sample of IPs from their blocks to check whether k12.ny.us PTR records exist.
 
 Two outcomes are meaningful:
-  - PTR records found in Tier 2 block → RIG could theoretically find this
+  - PTR records found in Tier 2 block -> RIG could theoretically find this
     district but missed it because GeoLite2 placed the block outside our
     metro search radius. The limitation is geo-accuracy, not PTR coverage.
-  - No PTR records found → ARIN is the only discovery method for this
+  - No PTR records found -> ARIN is the only discovery method for this
     district. Validates the two-tier approach: these districts are invisible
     to RIG regardless of search radius.
 
@@ -148,12 +148,12 @@ def run(phase0_file=PHASE0_FILE, combined_file=COMBINED_FILE,
     print(f"    - Tier 2 only (ARIN-only)    : {len(t2_only)}")
     print()
     if t2_with:
-        print(f"  → RIG missed {len(t2_with)} district(s) that have PTR records:")
+        print(f"  -> RIG missed {len(t2_with)} district(s) that have PTR records:")
         for r in t2_with:
             print(f"      {r['district']}  ({r['sample_ptr']})")
         print(f"    Cause: GeoLite2 geo-accuracy, not absence of PTR records.")
     else:
-        print(f"  → No Tier-2-only districts have k12.ny.us PTR records.")
+        print(f"  -> No Tier-2-only districts have k12.ny.us PTR records.")
         print(f"    RIG found everything findable; remaining districts are ARIN-only.")
     print(f"\n  Results written to {output_file}")
 
