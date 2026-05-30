@@ -33,7 +33,9 @@ SOI_BUFFER_KM = 50    # extra slack added to the SoI bound (from the paper)
 NEAR_KM       = 40    # probes within this range count as "near" the school
 FAR_KM        = 100   # probes beyond this range count as "far"
 
-VALIDATE = {"high"}   # only ping high confidence IPs to save credits (~30 credits/IP)
+VALIDATE          = {"high"}   # only ping high confidence IPs (~30 credits/IP)
+MAX_IPS_PER_SCHOOL = 3         # cap per school — after scoring fix, thousands of IPs become
+                               # "high"; we only need a sample per school to validate geography.
 
 
 def distance_km(lat1, lon1, lat2, lon2):
@@ -175,10 +177,29 @@ def run(input_file=INPUT_FILE, schools_file=SCHOOLS_FILE, output_file=OUTPUT_FIL
     with open(input_file, newline="", encoding="utf-8") as f:
         all_rows = list(csv.DictReader(f))
 
-    to_validate = [r for r in all_rows if r["confidence"] in VALIDATE]
-    skip_rows   = [r for r in all_rows if r["confidence"] not in VALIDATE]
-    print(f"Validating {len(to_validate)} high/medium confidence IPs via RIPE Atlas")
-    print(f"Skipping {len(skip_rows)} low-confidence IPs (saving credits)")
+    to_validate_all = [r for r in all_rows if r["confidence"] in VALIDATE]
+    skip_rows       = [r for r in all_rows if r["confidence"] not in VALIDATE]
+
+    # Apply per-school cap: take up to MAX_IPS_PER_SCHOOL IPs per school.
+    # Prioritise IPs with a ny_k12_domain hit (strongest signal), then by score.
+    from collections import defaultdict
+    per_school = defaultdict(list)
+    for r in to_validate_all:
+        per_school[r["school_name"]].append(r)
+
+    to_validate = []
+    capped_rows = []
+    for school, ips in per_school.items():
+        ips_sorted = sorted(ips,
+                            key=lambda r: (-int(r.get("ny_k12_domain") == "yes"),
+                                          -int(r.get("score", 0))))
+        to_validate.extend(ips_sorted[:MAX_IPS_PER_SCHOOL])
+        capped_rows.extend(ips_sorted[MAX_IPS_PER_SCHOOL:])
+
+    print(f"Validating {len(to_validate)} IPs via RIPE Atlas "
+          f"(capped at {MAX_IPS_PER_SCHOOL}/school, {len(capped_rows)} capped, "
+          f"{len(skip_rows)} low-confidence skipped)")
+    print(f"Estimated credit cost: ~{len(to_validate) * 30} credits")
 
     # Step 2: Ping each IP and check results
     output_rows = []
@@ -254,7 +275,10 @@ def run(input_file=INPUT_FILE, schools_file=SCHOOLS_FILE, output_file=OUTPUT_FIL
         output_rows.append(row)
         time.sleep(2)
 
-    # Step 3: Pass low-confidence rows through unchanged
+    # Step 3: Pass capped and low-confidence rows through unchanged
+    for r in capped_rows:
+        r["ripe_validated"] = "not_run"
+        output_rows.append(r)
     for r in skip_rows:
         r["ripe_validated"] = "not_run"
         output_rows.append(r)

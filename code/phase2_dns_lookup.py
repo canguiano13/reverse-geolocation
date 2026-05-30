@@ -29,9 +29,14 @@ import dns.reversename
 INPUT_FILE  = "data/outputs/phase1_candidates.csv"
 OUTPUT_FILE = "data/outputs/phase2_filtered.csv"
 
-TIMEOUT   = 1.0   # seconds before a DNS lookup is considered failed
-WORKERS   = 50    # number of parallel DNS lookups
-MAX_CIDRS = 2000  # skip schools with more blocks than this (usually dense urban schools)
+TIMEOUT      = 1.0   # seconds before a DNS lookup is considered failed
+WORKERS      = 50    # number of parallel DNS lookups
+MAX_CIDRS    = 5000  # skip schools with more blocks than this (usually dense urban schools)
+                     # 5000 is enough for Bay Shore (2520), Syosset (3152), Malverne (3122)
+                     # Probe-first keeps runtime manageable: 5000 probes ≈ 100s at 50 workers
+N_PROBE_IPS  = 5     # IPs to check per block in probe phase (checked in parallel, ~1s total)
+                     # Catches PTR records that aren't on .1 — e.g. brentwood.k12.ny.us is on
+                     # .11.2, not .11.1, so a 1-IP probe would miss it entirely
 
 # Words to ignore when extracting keywords from a school name.
 # e.g. "Highview Elementary School" → keywords: ["highview"]
@@ -42,14 +47,22 @@ STOP_WORDS = {
     "public", "charter", "magnet", "preparatory", "prep", "independent",
     "international", "institute", "center", "campus",
     "north", "south", "east", "west",
+    # Geographic terms too common on Long Island / NYC to use as school identifiers
+    # e.g. "The Children's Center at UCP of Long Island" → keywords would include
+    # "long" and "island", which match longislandfiberexchange.net (an ISP)
+    "long", "island", "new", "york",
 }
 
 # Words in a hostname that suggest it belongs to a school,
 # even if the school's name isn't in it.
 # e.g. "barracuda.msd.k12.ny.us" → partial match via "k12"
+#
+# NOTE: "sch" intentionally removed — it matched the Greek education domain
+# (.att.sch.gr) because .sch. passes the word-boundary regex. All legitimate
+# NY school PTR records use longer identifiers (k12, csd, ufsd, boces, etc.).
 K12_INDICATORS = {
     "k12", "school", "schools", "district", "unified", "elementary",
-    "middle", "high", "sch", "schl",
+    "middle", "high", "schl",
     "isd", "usd", "cusd", "pusd",
     "acad", "academy",
     "csd", "ufsd", "boces",
@@ -112,10 +125,13 @@ def classify(hostname, keywords):
 
 def probe_block(cidr, keywords):
     """
-    Check just the first usable IP of a CIDR block.
-    Returns True if it looks like a school network (k12 indicator or name match).
-    Used to skip entire blocks that clearly aren't school networks — avoids
-    expanding 254 IPs for blocks that would all return no_match anyway.
+    Check the first N_PROBE_IPS usable IPs of a CIDR block in parallel.
+    Returns True if ANY of them looks like a school network.
+
+    Why N_PROBE_IPS > 1: some districts' PTR records don't start at .1.
+    e.g. brentwood.k12.ny.us is on .11.2 — a 1-IP probe on .11.1 would
+    return None and skip the entire /24, missing Brentwood entirely.
+    Parallel lookup keeps total probe time ~1s regardless of N_PROBE_IPS.
     """
     try:
         net = ipaddress.ip_network(cidr, strict=False)
@@ -124,10 +140,17 @@ def probe_block(cidr, keywords):
         hosts = list(net.hosts())
         if not hosts:
             return False
-        hostname = reverse_dns(str(hosts[0]))
-        if hostname is None:
-            return False
-        return classify(hostname, keywords) in ("match", "partial_match")
+
+        probe_ips = [str(h) for h in hosts[:N_PROBE_IPS]]
+
+        # Run all probes in parallel so latency stays ~1s not N*1s
+        with ThreadPoolExecutor(max_workers=len(probe_ips)) as pp:
+            futures = {pp.submit(reverse_dns, ip): ip for ip in probe_ips}
+            for future in as_completed(futures):
+                hostname = future.result()
+                if hostname and classify(hostname, keywords) in ("match", "partial_match"):
+                    return True
+        return False
     except Exception:
         return False
 

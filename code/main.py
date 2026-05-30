@@ -35,18 +35,21 @@ import phase1_geo_lookup       as phase1
 import phase2_dns_lookup       as phase2
 import phase3_confirm          as phase3
 import phase4_ripe_atlas       as phase4
+import fix_attribution
 import analysis
+import combined_summary
 import verify_high_confidence  as verify
 import check_probe_coverage    as probe_check
 
 # ── configuration ────────────────────────────────────────────────────────────
 
-RADII            = [10]                               # km thresholds to run
-# RADII            = [30]                               # km thresholds to run
-SCHOOLS_FILE     = "data/inputs/gigamaps_schools_ny.csv"  # all 13k NY schools
-FORCE_RERUN_FROM = 4 #1                                      # re-run from phase 1 (fresh run)
-                                                          # set to None to skip existing files
-TEST_CAP         = None                                   # set to e.g. 500 to test runtime
+RADII            = [5, 10, 20, 30]                          # sensitivity analysis — all four radii
+SCHOOLS_FILE     = "data/inputs/metro_schools_nyc.csv"      # 5,886 metro NYC schools (Long Island + Westchester + Orange County + NYC)
+# SCHOOLS_FILE   = "data/inputs/targeted_schools.csv"       # 25 targeted districts (ARIN-confirmed + k12.ny.us)
+# SCHOOLS_FILE   = "data/inputs/gigamaps_schools_ny.csv"    # full 13k list (not recommended — slow + OOM)
+FORCE_RERUN_FROM = None                                     # skip phases whose output already exists
+                                                            # 10km is already done; 5/20/30km will run fresh
+TEST_CAP         = None                                     # set to e.g. 50 to test runtime
 
 PHASE0_FILE      = "data/outputs/phase0_arin.csv"         # ARIN results (radius-independent)
 
@@ -55,13 +58,14 @@ PHASE0_FILE      = "data/outputs/phase0_arin.csv"         # ARIN results (radius
 def paths(radius):
     s = f"_{radius}km"
     return {
-        "phase1":      f"data/outputs/phase1_candidates{s}.csv",
-        "candidates":  f"data/outputs/phase_candidates{s}.csv",   # phase0 + phase1 merged
-        "phase2":      f"data/outputs/phase2_filtered{s}.csv",
-        "phase3":      f"data/outputs/phase3_confirmed{s}.csv",
-        "phase4":      f"data/outputs/phase4_validated{s}.csv",
-        "analysis":    f"data/outputs/analysis_summary{s}.csv",
-        "analysis_p4": f"data/outputs/analysis_summary_phase4{s}.csv",
+        "phase1":        f"data/outputs/phase1_candidates{s}.csv",
+        "candidates":    f"data/outputs/phase_candidates{s}.csv",   # phase0 + phase1 merged
+        "phase2":        f"data/outputs/phase2_filtered{s}.csv",
+        "phase3":        f"data/outputs/phase3_confirmed{s}.csv",
+        "phase3_reattr": f"data/outputs/phase3_reattributed{s}.csv",
+        "phase4":        f"data/outputs/phase4_validated{s}.csv",
+        "analysis":      f"data/outputs/analysis_summary{s}.csv",
+        "analysis_p4":   f"data/outputs/analysis_summary_phase4{s}.csv",
     }
 
 
@@ -174,21 +178,42 @@ if __name__ == "__main__":
         else:
             print(f"Phase 3: skipping — {f['phase3']} already exists")
 
+        # Phase 3b — Fix attribution: re-assign IPs to correct districts via k12.ny.us PTR
+        # CIDR-only dedup can give blocks the wrong school name; PTR records tell us the truth.
+        header("Phase 3b: Fix Attribution (k12.ny.us hostname → correct district)")
+        fix_attribution.run(
+            input_file   = f["phase3"],
+            schools_file = "data/inputs/gigamaps_schools_ny.csv",   # full list for name matching
+            output_file  = f["phase3_reattr"],
+        )
+
         # Phase 4 — RIPE Atlas validation
         if should_run(4, f["phase4"]):
             header("Phase 4: RIPE Atlas Validation")
-            phase4.run(input_file=f["phase3"], schools_file=SCHOOLS_FILE, output_file=f["phase4"])
+            phase4.run(input_file=f["phase3_reattr"], schools_file="data/inputs/gigamaps_schools_ny.csv", output_file=f["phase4"])
+            # NOTE: gigamaps_schools_ny.csv (not targeted_schools.csv) because fix_attribution
+            # renames IPs to school names from the full 13k list — targeted_schools.csv
+            # only has 25 entries and would miss most coordinate lookups.
         else:
             print(f"Phase 4: skipping — {f['phase4']} already exists")
 
-        # Analysis
+        # Analysis — uses reattributed phase3 so district names are correct
         header("Analysis")
         analysis.run(
-            input_file     = f["phase3"],
+            input_file     = f["phase3_reattr"],
             phase4_file    = f["phase4"],
             schools_file   = SCHOOLS_FILE,
             output_file    = f["analysis"],
             output_file_p4 = f["analysis_p4"],
+        )
+
+        # Combined two-tier summary — one per radius for sensitivity analysis
+        header(f"Combined Two-Tier Summary ({radius}km)")
+        combined_summary.run(
+            phase0_file  = PHASE0_FILE,
+            phase3_file  = f["phase3_reattr"],
+            phase4_file  = f["phase4"],
+            output_file  = f"data/outputs/combined_results_{radius}km.csv",
         )
 
     # Verification — runs across all radii at the end
@@ -204,8 +229,10 @@ if __name__ == "__main__":
     for radius in RADII:
         f = paths(radius)
         print(f"\n  {radius}km results:")
-        print(f"    Phase 3 : {f['phase3']}")
-        print(f"    Phase 4 : {f['phase4']}")
-        print(f"    Analysis: {f['analysis']}")
+        print(f"    Phase 3          : {f['phase3']}")
+        print(f"    Phase 3 (fixed)  : {f['phase3_reattr']}")
+        print(f"    Phase 4          : {f['phase4']}")
+        print(f"    Analysis         : {f['analysis']}")
+        print(f"    Combined summary : data/outputs/combined_results_{radius}km.csv")
     print(f"\n  ARIN blocks  : {PHASE0_FILE}")
     print(f"  Verification : data/outputs/verification_results.csv")

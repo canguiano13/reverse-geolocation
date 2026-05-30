@@ -35,17 +35,40 @@ whois_cache = {}
 
 
 def load_edu_asns():
-    """Load ASNs classified as education/research from the Stanford ASdb dataset."""
+    """
+    Load ASNs classified as education from the Stanford ASdb dataset.
+
+    Uses exact category string matching (from peer code / ASdbFilter.py) rather
+    than loose substring matching on "education" or "research".  The targeted
+    categories are:
+      - "Education and Research"
+      - "Elementary and Secondary Schools"
+      - "Colleges, Universities, and Professional Schools"
+      - "Other Schools, Instruction, and Exam Preparation..."
+
+    Exact matching avoids false positives like "Research Hospitals" or
+    "Defense Research" being pulled in as school ASNs.
+    """
+    EDU_CATEGORIES = {
+        "Education and Research",
+        "Elementary and Secondary Schools",
+        "Colleges, Universities, and Professional Schools",
+        "Other Schools, Instruction, and Exam Preparation and Testing",
+    }
+
     edu_asns = set()
     try:
         with open(ASDB_FILE, newline="", encoding="utf-8") as f:
-            for row in csv.DictReader(f):
-                categories = " ".join(v for k, v in row.items() if "Category" in k and v).lower()
-                if "education" in categories or "research" in categories:
+            reader = csv.DictReader(f)
+            for row in reader:
+                # Collect all category columns (handles variable column names)
+                row_cats = {v.strip() for k, v in row.items()
+                            if "Category" in k and v and v.strip()}
+                if row_cats & EDU_CATEGORIES:          # exact intersection
                     asn = str(row.get("ASN", "")).strip().lstrip("AS").lstrip("as")
                     if asn:
                         edu_asns.add(asn)
-        print(f"Loaded {len(edu_asns)} educational ASNs")
+        print(f"Loaded {len(edu_asns)} educational ASNs (exact category match)")
     except FileNotFoundError:
         print(f"Warning: {ASDB_FILE} not found — educational ASN check disabled")
     return edu_asns
@@ -161,7 +184,15 @@ def score_ip(hostname, asn, org_name, school_name, edu_asns, fcc_providers):
         fcc_match = org_matches_provider(org_name, fcc_providers[school_name])
 
     score = sum([dns_match, ny_k12_domain, whois_match, fcc_match])
-    label = "high" if score >= 3 else "medium" if score >= 2 else "low"
+
+    # *.k12.ny.us is a NY State-managed DNS zone — only actual NY school districts
+    # are delegated subdomains. An IP with a PTR in that zone is definitively a NY
+    # school IP regardless of whether the transit ISP is "educational".
+    # → Lower the high-confidence threshold to 2 when ny_k12_domain is confirmed.
+    if ny_k12_domain:
+        label = "high" if score >= 2 else "medium"
+    else:
+        label = "high" if score >= 3 else "medium" if score >= 2 else "low"
 
     return score, label, is_hosting, whois_match, fcc_match
 
@@ -209,7 +240,26 @@ def run(input_file=INPUT_FILE, output_file=OUTPUT_FILE):
         print(f"{i}/{len(candidates)}  {ip:<18}  {org_name[:30]:<30}  "
               f"fcc={'yes' if fcc_match else 'no'}  score={score}  [{confidence}]")
 
-    # Step 3: Sort and save
+    # Step 3: Deduplicate by ip_address — the same IP can appear under multiple
+    # nearby schools when the same CIDR block geo-matches more than one school.
+    # Keep the row with the highest score; break ties by preferring ny_k12_domain.
+    ip_best = {}
+    for r in results:
+        ip = r["ip_address"]
+        if ip not in ip_best:
+            ip_best[ip] = r
+        else:
+            prev = ip_best[ip]
+            if (r["score"] > prev["score"] or
+                    (r["score"] == prev["score"] and
+                     r["ny_k12_domain"] == "yes" and prev["ny_k12_domain"] != "yes")):
+                ip_best[ip] = r
+    dedup_count = len(results) - len(ip_best)
+    if dedup_count:
+        print(f"Deduplicated {dedup_count} IPs that appeared under multiple schools")
+    results = list(ip_best.values())
+
+    # Sort and save
     results.sort(key=lambda r: (r["school_name"], -r["score"]))
 
     fieldnames = [

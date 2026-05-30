@@ -19,9 +19,9 @@ import re
 import os
 from collections import defaultdict
 
-INPUT_FILE   = "data/outputs/phase3_confirmed_10km.csv"
+INPUT_FILE   = "data/outputs/phase3_confirmed_10km.csv"    # default for standalone use
 SCHOOLS_FILE = "data/inputs/gigamaps_schools_ny.csv"
-OUTPUT_FILE  = "data/outputs/phase3_reattributed_10km.csv"
+OUTPUT_FILE  = "data/outputs/phase3_reattributed_10km.csv" # default for standalone use
 
 # Manual mappings for all known district codes → search term for school list.
 # We know all 8 codes from the data, so map them all explicitly.
@@ -35,6 +35,35 @@ MANUAL_MAPPINGS = {
     "wallkill":         "Wallkill",
     "liberty":          "Liberty",
     "hackley":          "Hackley",
+    # Compound codes: no spaces so find_best_match can't split them — map explicitly.
+    # Code is the subdomain before .k12.ny.us (e.g. halfhollowhills.k12.ny.us → "halfhollowhills")
+    "halfhollowhills":  "Half Hollow Hills High School",    # → Half Hollow Hills High School East/West
+    "hhh":              "Half Hollow Hills High School",    # alternate code for same district
+    "northshore":       "Sea Cliff School",                 # North Shore CSD — unique identifier avoids PS 25 false match
+    "westhempstead":    "West Hempstead High School",       # West Hempstead UFSD
+    "pob":              "Plainview-Old Bethpage",           # Plainview-Old Bethpage CSD
+    "smithtown":        "Smithtown High School",            # avoids "New Beginnings of Smithtown daycare"
+    "greatneck":        "Great Neck South Middle School",   # Great Neck UFSD (Nassau County)
+    "lmcs":             "Livingston Manor Central School",  # Livingston Manor CSD (Sullivan County) via Ulster County BOCES
+}
+
+# District type overrides — flags known non-standard cases.
+# "private"      — not a public school district
+# "out_of_metro" — public district outside metro NYC, found via BOCES/ISP infrastructure
+# All unmapped codes default to "public".
+DISTRICT_FLAGS = {
+    "hackley": "private",       # Hackley School — private prep school, Tarrytown NY
+    "lmcs":    "out_of_metro",  # Livingston Manor CSD — Sullivan County (90mi north),
+                                # geolocated here because it uses Ulster County BOCES infrastructure
+}
+
+# Display name overrides — when the best unique search anchor for a district code
+# is an obscure school name, map it to a more recognisable district-level name.
+# The search anchor (in MANUAL_MAPPINGS) stays unchanged; only the output label changes.
+DISPLAY_NAMES = {
+    "Sea Cliff School": "North Shore High School",  # northshore.k12.ny.us → North Shore CSD
+                                                    # Sea Cliff is the unique anchor; High School
+                                                    # is the recognisable district identifier
 }
 
 
@@ -116,18 +145,21 @@ def run(input_file=INPUT_FILE, schools_file=SCHOOLS_FILE, output_file=OUTPUT_FIL
 
             matched_name = code_cache[code]
             row["geo_school"]        = row["school_name"]   # preserve original
-            row["school_name"]       = matched_name or row["school_name"]
+            attributed               = matched_name or row["school_name"]
+            row["school_name"]       = DISPLAY_NAMES.get(attributed, attributed)
             row["district_code"]     = code
+            row["district_type"]     = DISTRICT_FLAGS.get(code, "public")
             stats["k12_domain"] += 1
         else:
             # No k12.ny.us hostname — keep original Phase 1 attribution
-            row["geo_school"]    = row["school_name"]
-            row["district_code"] = ""
+            row["geo_school"]        = row["school_name"]
+            row["district_code"]     = ""
+            row["district_type"]     = "public"
             stats["no_domain"] += 1
 
     # Write output
     out_fieldnames = ["ip_address", "school_name", "geo_school", "district_code",
-                      "hostname", "phase2_match", "asn", "whois_org",
+                      "district_type", "hostname", "phase2_match", "asn", "whois_org",
                       "is_hosting", "ny_k12_domain", "whois_match", "fcc_match",
                       "score", "confidence"]
 
