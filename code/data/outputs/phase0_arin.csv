@@ -1,0 +1,48 @@
+cidr,school_name,org_handle
+206.226.138.0/24,Huntington Union Free School District,HUNTI-6
+198.199.181.0/24,Kenmore-Town of Tonawanda Union Free School District,KTTS-Z
+204.27.0.0/20,Kenmore-Town of Tonawanda Union Free School District,KTTS-Z
+104.166.122.0/24,Malverne Union Free School District,MUFSD-2
+23.179.48.0/24,Malverne Union Free School District,MUFSD-2
+205.230.186.0/23,Northport-East Northport Union Free School District,NNUFSD
+205.230.188.0/22,Northport-East Northport Union Free School District,NNUFSD
+206.226.143.0/24,Smithtown Union Free School District,SMITH-80
+206.226.139.0/24,South Huntington Union Free School District,SOUTH-241
+163.153.0.0/16,Albany Schoharie Schenectady BOCES,ASSB
+199.221.4.0/24,BOCES,BOCES-1
+4.43.108.64/27,BOCES,BOCES-2
+166.109.0.0/16,BOCES Southern Westchester Lower Hudson Regional Information Center,BSWLHRIC
+216.162.16.0/20,Broome - Tioga BOCES,BTB-2
+207.241.240.0/20,Dutchess County BOCES,DCBI
+170.161.0.0/16,Eastern Suffolk BOCES,ESB-Z
+209.68.64.0/18,GV/WFL BOCES Educational TechnologyService,GBET
+168.170.0.0/16,Madison-Oneida BOCES,MADISO
+198.252.164.0/24,Madison-Oneida BOCES,MADISO
+64.90.240.0/20,Orange-Ulster BOCES,ORANGE-5
+192.30.126.0/23,Greater Southern Tier (GST) BOCES,SB-194
+209.2.245.0/24,Ulster County BOCES,UCB-1
+64.75.64.0/18,Ulster County BOCES,UCB-1
+206.226.128.0/17,Western Suffolk BOCES,WSB-1
+64.69.224.0/20,WASHINGTON SARATOGA WARREN HAMILTON & ESSEX BOCES,WSWHEB
+64.72.66.64/28,Beacon Central School District,BCSD-10
+206.181.202.192/26,BrockportCentral School District,BSD-14
+70.34.80.0/20,Clarkstown Central School District,CLARK-82
+206.209.176.0/20,Greece Central School District,GCSD
+209.222.32.0/20,Monroe-Woodbury Central School District,MWS
+206.201.208.0/20,Sachem Central School District,SCSD
+72.18.53.224/27,Canandaigua City School District,CCSD-86
+23.190.208.0/24,Rochester City School District,RCSD-5
+198.36.16.0/21,Syracuse City School District,SCS-10
+198.36.24.0/22,Syracuse City School District,SCS-10
+198.36.18.0/24,Syracuse City School District,SCS-10
+198.36.20.0/24,Syracuse City School District,SCS-10
+198.36.21.0/24,Syracuse City School District,SCS-10
+198.36.22.0/24,Syracuse City School District,SCS-10
+198.36.23.0/24,Syracuse City School District,SCS-10
+198.36.25.0/24,Syracuse City School District,SCS-10
+198.36.26.0/24,Syracuse City School District,SCS-10
+198.36.27.0/24,Syracuse City School District,SCS-10
+209.2.110.0/23,Nysernet/NYC Board of Education,NBE-1
+209.2.12.0/23,Nysernet/NYC Board of Education,NBE-1
+63.116.202.16/28,NYC BOARD OF EDUCATION,NYCBO
+65.211.30.240/28,NYC BOARD OF EDUCATION,NYCBO-1
