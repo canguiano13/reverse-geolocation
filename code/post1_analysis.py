@@ -1,23 +1,22 @@
 """
-Analysis — Per-school IP summary.
+Per-school IP summary.
 
-Reads phase 3 (and optionally phase 4) results and prints a breakdown
-of IPs found per school at each confidence level. Writes CSV summaries.
+Reads phase 3 (and optionally phase 4) results and prints/writes a breakdown
+of IPs found per school at each confidence level.
 """
 
 import csv
 import os
 from collections import defaultdict
 
-INPUT_FILE       = "data/outputs/phase3_confirmed.csv"
-PHASE4_FILE      = "data/outputs/phase4_validated.csv"
-SCHOOLS_FILE     = "data/inputs/schools_selected.csv"
-OUTPUT_FILE      = "data/outputs/analysis_summary.csv"
-OUTPUT_FILE_P4   = "data/outputs/analysis_summary_phase4.csv"
+INPUT_FILE     = "data/outputs/phase3_confirmed.csv"
+PHASE4_FILE    = "data/outputs/phase4_validated.csv"
+SCHOOLS_FILE   = "data/inputs/metro_schools_nyc.csv"
+OUTPUT_FILE    = "data/outputs/analysis_summary.csv"
+OUTPUT_FILE_P4 = "data/outputs/analysis_summary_phase4.csv"
 
 
 def summarize(rows, all_schools, label):
-    """Print and return a per-school summary for a set of IP rows."""
     by_school = defaultdict(list)
     for row in rows:
         by_school[row["school_name"].strip()].append(row)
@@ -86,7 +85,7 @@ def run(input_file=INPUT_FILE, phase4_file=PHASE4_FILE,
     with open(input_file, newline="", encoding="utf-8") as f:
         phase3_rows = list(csv.DictReader(f))
 
-    write_summary(summarize(phase3_rows, all_schools, "Phase 3 — Before RIPE Atlas Validation"), output_file)
+    write_summary(summarize(phase3_rows, all_schools, "Phase 3: Before RIPE Atlas Validation"), output_file)
 
     if os.path.exists(phase4_file):
         with open(phase4_file, newline="", encoding="utf-8") as f:
@@ -95,9 +94,9 @@ def run(input_file=INPUT_FILE, phase4_file=PHASE4_FILE,
         removed = sum(1 for r in phase4_rows if r.get("ripe_validated") == "no")
         skipped = sum(1 for r in phase4_rows if r.get("ripe_validated") == "skipped")
         print(f"\nRIPE Atlas: removed {removed} IPs, {skipped} skipped (no probes)")
-        write_summary(summarize(validated_rows, all_schools, "Phase 4 — After RIPE Atlas Validation"), output_file_p4)
+        write_summary(summarize(validated_rows, all_schools, "Phase 4: After RIPE Atlas Validation"), output_file_p4)
     else:
-        print(f"\nNote: {phase4_file} not found — skipping phase 4 analysis.")
+        print(f"\nNote: {phase4_file} not found, skipping phase 4 analysis.")
 
 
 if __name__ == "__main__":

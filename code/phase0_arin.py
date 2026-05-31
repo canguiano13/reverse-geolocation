@@ -1,9 +1,7 @@
 """
-Phase 0 — ARIN WHOIS Discovery
+Phase 0: ARIN WHOIS discovery.
 
-Search ARIN for organizations with school-related names and pull all IP blocks
-they own. Same method as the "Where's Waldo Library?" paper, applied to schools.
-
+Search ARIN for orgs with school-related names and pull their registered IP blocks.
 Output: phase0_arin.csv  (cidr, school_name, org_handle)
 """
 
@@ -14,13 +12,13 @@ import requests
 
 OUTPUT_FILE = "data/outputs/phase0_arin.csv"
 HEADERS     = {"Accept": "application/json"}
-SLEEP       = 0.8   # seconds between API calls
+SLEEP       = 0.8
 RETRY       = 3
 
-# Search terms. NY-specific ones (boces, ufsd) don't need state filtering.
-# Generic ones (board of education) need state verification.
+# NY-specific terms (boces, ufsd) skip state verification.
+# Generic terms get checked against the org's state field.
 KEYWORDS = [
-    ("union free school",        True),   # (search term, ny_specific)
+    ("union free school",        True),
     ("boces",                    True),
     ("enlarged city school",     True),
     ("central school district",  False),
@@ -31,7 +29,6 @@ KEYWORDS = [
 
 
 def arin_get(url):
-    """GET from the ARIN API. Retries on failure."""
     for attempt in range(RETRY):
         try:
             r = requests.get(url, headers=HEADERS, timeout=15)
@@ -46,7 +43,6 @@ def arin_get(url):
 
 
 def search_orgs(keyword):
-    """Return all ARIN orgs whose name contains the keyword."""
     data = arin_get(f"https://whois.arin.net/rest/orgs;name=*{keyword.replace(' ', '%20')}*")
     if not data:
         return []
@@ -55,19 +51,16 @@ def search_orgs(keyword):
 
 
 def is_ny_org(handle):
-    """Return True if this org is in NY state, False if confirmed not-NY, None if unknown."""
+    """True if org is in NY, False if confirmed not-NY, None if lookup failed."""
     data = arin_get(f"https://whois.arin.net/rest/org/{handle}")
     if not data:
         return None
     org   = data.get("org", {})
-    state = (org.get("iso3166-2") or {}).get("$", "")
-    if not state:
-        state = (org.get("state") or {}).get("$", "")
+    state = (org.get("iso3166-2") or {}).get("$", "") or (org.get("state") or {}).get("$", "")
     return "NY" in state.upper()
 
 
 def get_networks(handle):
-    """Return all IP blocks registered to an ARIN org."""
     data = arin_get(f"https://whois.arin.net/rest/org/{handle}/nets")
     if not data:
         return []
@@ -76,7 +69,7 @@ def get_networks(handle):
 
 
 def net_to_cidrs(net_ref):
-    """Convert an ARIN network (start + end IP) to CIDR notation. IPv4 only."""
+    """Convert ARIN net (start + end IP) to IPv4 CIDR notation."""
     start = net_ref.get("@startAddress", "")
     end   = net_ref.get("@endAddress",   "")
     if not start or not end:
@@ -114,11 +107,9 @@ def run(output_file=OUTPUT_FILE):
                 continue
             seen_orgs.add(handle)
 
-            # For generic keywords, verify this org is in NY.
-            # None (API failed) = keep it; False (confirmed non-NY) = skip.
+            # For generic keywords, verify NY. None means lookup failed, keep it.
             if not ny_specific:
-                ny = is_ny_org(handle)
-                if ny is False:
+                if is_ny_org(handle) is False:
                     continue
                 time.sleep(SLEEP)
 
@@ -136,7 +127,7 @@ def run(output_file=OUTPUT_FILE):
                         results.append({"cidr": cidr, "school_name": name, "org_handle": handle})
 
             if new_cidrs:
-                print(f"  ✓ {name:<55} {len(new_cidrs)} blocks")
+                print(f"  ok  {name:<55} {len(new_cidrs)} blocks")
 
     with open(output_file, "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=["cidr", "school_name", "org_handle"])
@@ -144,7 +135,7 @@ def run(output_file=OUTPUT_FILE):
         writer.writerows(results)
 
     n_orgs = len({r["org_handle"] for r in results})
-    print(f"\nDone. {len(results)} IP blocks from {n_orgs} NY school organizations {output_file}")
+    print(f"\nDone. {len(results)} IP blocks from {n_orgs} NY school orgs -> {output_file}")
 
 
 if __name__ == "__main__":

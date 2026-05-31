@@ -1,15 +1,8 @@
 """
-Phase 1 — Geo Lookup
+Phase 1: scan GeoLite2 for every /24 block within RADIUS_KM of any school.
 
-Scan the GeoLite2 database and find every IP block (/24) within RADIUS_KM
-of any school. Writes matching blocks to CSV for phase 2 to check.
-
-Uses a spatial grid so we don't compare every IP against all 12k schools.
-Streams results straight to disk — no large in-memory lists.
-
-Note: the original paper used MaxMind + IPinfo together (two databases).
-We use MaxMind GeoLite2 only. If IPinfo access is obtained, a second
-scan_database() call can be added here the same way.
+Uses a spatial grid index so each block only checks the schools in its cell.
+Streams results to disk to keep memory usage flat.
 """
 
 import csv
@@ -22,15 +15,14 @@ SCHOOLS_FILE = "data/inputs/gigamaps_schools_ny.csv"
 OUTPUT_FILE  = "data/outputs/phase1_candidates.csv"
 DB_FILE      = "data/inputs/GeoLite2-City.mmdb"
 RADIUS_KM    = 10
-GRID_DEG     = 0.5   # grid cell size in degrees; 0.5° ≈ 55km
+GRID_DEG     = 0.5   # cell size in degrees, ~55km
 
-# Bounding box for NY state — drop blocks clearly outside NY early
+# NY state bounding box: drop blocks clearly outside NY early
 NY_LAT_MIN, NY_LAT_MAX =  40.4,  45.1
 NY_LON_MIN, NY_LON_MAX = -79.9, -71.7
 
 
 def distance_km(lat1, lon1, lat2, lon2):
-    """Haversine distance between two GPS coordinates (km)."""
     R = 6371.0
     dlat = math.radians(lat2 - lat1)
     dlon = math.radians(lon2 - lon1)
@@ -40,18 +32,7 @@ def distance_km(lat1, lon1, lat2, lon2):
     return R * 2 * math.asin(math.sqrt(a))
 
 
-def get_lat_lon(record):
-    """Extract lat/lon from a geo DB record (handles nested and flat formats)."""
-    loc = record.get("location") or {}
-    lat = loc.get("latitude")
-    lon = loc.get("longitude")
-    if lat is not None and lon is not None:
-        return lat, lon
-    return record.get("latitude"), record.get("longitude")
-
-
 def build_grid(school_boxes, grid_deg):
-    """Index schools into a spatial grid for fast lookup by (row, col) cell."""
     grid = defaultdict(list)
     for s in school_boxes:
         row_min = int(math.floor(s["min_lat"] / grid_deg))
@@ -65,28 +46,30 @@ def build_grid(school_boxes, grid_deg):
 
 
 def scan_database(db_path, school_grid, grid_deg, radius_km, seen_cidrs, writer):
-    """Scan one geo database and write matching blocks to the CSV writer."""
     count = 0
     with maxminddb.open_database(db_path) as db:
         for network, record in db:
             cidr = str(network)
-            ip_lat, ip_lon = get_lat_lon(record)
+            loc  = record.get("location") or {}
+            ip_lat = loc.get("latitude")
+            ip_lon = loc.get("longitude")
+            if ip_lat is None or ip_lon is None:
+                ip_lat = record.get("latitude")
+                ip_lon = record.get("longitude")
 
             if ip_lat is None or ip_lon is None:
                 continue
             if not (NY_LAT_MIN <= ip_lat <= NY_LAT_MAX and NY_LON_MIN <= ip_lon <= NY_LON_MAX):
                 continue
 
-            # Only keep /24 blocks
             try:
                 if ipaddress.ip_network(cidr, strict=False).prefixlen < 24:
                     continue
             except ValueError:
                 continue
 
-            cell_row = int(math.floor(ip_lat / grid_deg))
-            cell_col = int(math.floor(ip_lon / grid_deg))
-            for s in school_grid.get((cell_row, cell_col), []):
+            cell = (int(math.floor(ip_lat / grid_deg)), int(math.floor(ip_lon / grid_deg)))
+            for s in school_grid.get(cell, []):
                 if not (s["min_lat"] <= ip_lat <= s["max_lat"]
                         and s["min_lon"] <= ip_lon <= s["max_lon"]):
                     continue
@@ -107,7 +90,6 @@ def run(radius_km=RADIUS_KM, schools_file=SCHOOLS_FILE, output_file=OUTPUT_FILE)
                    if r["school_name"].strip().lower() != "name unknown"]
     print(f"Loaded {len(schools)} schools")
 
-    # Pre-compute bounding boxes and build spatial grid
     school_boxes = []
     for s in schools:
         lat  = float(s["latitude"])

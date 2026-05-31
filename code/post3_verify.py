@@ -1,8 +1,8 @@
 """
-Verification — Check high-confidence IPs against ARIN RDAP.
+Verify high-confidence IPs against ARIN RDAP.
 
-For every high-confidence IP in phase 3 results, look up the actual owner
-in ARIN and classify it as TRUE_POSITIVE, FALSE_POSITIVE, or MANUAL_CHECK.
+For every high-confidence IP from phase 3, look up the actual owner in ARIN
+and classify as TRUE_POSITIVE, FALSE_POSITIVE, or MANUAL_CHECK.
 
 Output: verification_results.csv
 """
@@ -38,7 +38,7 @@ KNOWN_NON_SCHOOLS = [
 
 
 def arin_lookup(ip):
-    """Ask ARIN who owns an IP. Returns (org_name, country)."""
+    """Returns (org_name, country)."""
     try:
         r = requests.get(ARIN_URL.format(ip), timeout=8)
         if r.status_code != 200:
@@ -62,7 +62,7 @@ def arin_lookup(ip):
 
 
 def classify(ip, hostname, school_name, org):
-    """Return (verdict, reason) for an IP."""
+    """Returns (verdict, reason)."""
     if ip in KNOWN_VERDICTS:
         return KNOWN_VERDICTS[ip]
 
@@ -94,11 +94,11 @@ def classify(ip, hostname, school_name, org):
         if name in o or name in h:
             return "FALSE_POSITIVE", f"known non-school: {name}"
 
-    # Single-word "new" match — New Hyde Park false positive
+    # Single-word "new" matches "New Hyde Park" type false positives
     school_words   = set(school_name.lower().split())
     hostname_words = set(re.sub(r"[^a-z0-9]", " ", h).split())
     if school_words & hostname_words == {"new"}:
-        return "FALSE_POSITIVE", "only 'new' matched — New Hyde Park false positive"
+        return "FALSE_POSITIVE", "only 'new' matched, New Hyde Park false positive"
 
     return "MANUAL_CHECK", f"org={org or 'unknown'}, hostname={hostname}"
 
@@ -107,7 +107,6 @@ def run(files=None, output_file=OUTPUT_FILE):
     if files is None:
         files = FILES
 
-    # Collect unique high-confidence IPs across all runs
     seen      = {}
     run_label = {}
     for run_name, filepath in files.items():
@@ -138,9 +137,9 @@ def run(files=None, output_file=OUTPUT_FILE):
         else:
             print(f"[{i}/{len(seen)}] cached: {ip}", end=" ", flush=True)
 
-        org, country = arin_cache[ip]
+        org, country    = arin_cache[ip]
         verdict, reason = classify(ip, hostname, school, org)
-        print(f"{verdict}")
+        print(f"-> {verdict}")
 
         results.append({
             "run":            run_label[(ip, hostname)],
@@ -165,7 +164,7 @@ def run(files=None, output_file=OUTPUT_FILE):
     tp = sum(1 for r in results if r["verdict"] == "TRUE_POSITIVE")
     fp = sum(1 for r in results if r["verdict"] == "FALSE_POSITIVE")
     mc = sum(1 for r in results if r["verdict"] == "MANUAL_CHECK")
-    print(f"\nDone {output_file}")
+    print(f"\nDone -> {output_file}")
     print(f"TRUE_POSITIVE: {tp}  FALSE_POSITIVE: {fp}  MANUAL_CHECK: {mc}")
     if tp + fp > 0:
         print(f"Precision: {tp / (tp + fp):.1%}")

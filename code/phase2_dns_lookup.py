@@ -1,11 +1,11 @@
 """
-Phase 2 — Reverse DNS Lookup
+Phase 2: reverse DNS lookup.
 
 For every IP block from phase 1, check what hostname each IP resolves to.
 Keep IPs whose hostname contains the school's name or a K-12 keyword.
 
-Probe-first: check 5 IPs per block before expanding all 254. If none of
-those 5 look like a school, skip the whole block — cuts DNS calls by ~100x.
+Probe-first: check 5 IPs per block before expanding all 254. If none look
+school-related, skip the whole block.
 
 Checkpointing: saves progress after each school so a crashed run can resume.
 """
@@ -22,12 +22,12 @@ import dns.reversename
 INPUT_FILE  = "data/outputs/phase1_candidates.csv"
 OUTPUT_FILE = "data/outputs/phase2_filtered.csv"
 
-TIMEOUT      = 1.0   # seconds per DNS lookup
-WORKERS      = 50    # parallel threads
+TIMEOUT      = 1.0
+WORKERS      = 50
 MAX_CIDRS    = 5000  # skip schools with more blocks than this
-N_PROBE_IPS  = 5     # IPs checked per block in probe phase
+N_PROBE_IPS  = 5     # IPs sampled per block in probe phase
 
-# Generic words stripped from school names before keyword matching
+# Generic words removed before extracting keywords from a school name.
 STOP_WORDS = {
     "a", "an", "the", "of", "and", "in", "at", "for",
     "school", "schools", "district", "unified", "elementary", "middle",
@@ -38,8 +38,8 @@ STOP_WORDS = {
     "long", "island", "new", "york",
 }
 
-# Words in a hostname that indicate a school even without the school's name
-# Note: "sch" excluded — it matched a Greek education domain (.att.sch.gr)
+# Words in a hostname that indicate a school even without the school's name.
+# "sch" was excluded because it matched a Greek education domain (.att.sch.gr).
 K12_INDICATORS = {
     "k12", "school", "schools", "district", "unified", "elementary",
     "middle", "high", "schl",
@@ -50,13 +50,11 @@ K12_INDICATORS = {
 
 
 def get_keywords(school_name):
-    """Extract meaningful words from a school name (stop words removed)."""
     cleaned = re.sub(r"[^a-z0-9]", " ", school_name.lower())
     return [w for w in cleaned.split() if w not in STOP_WORDS and len(w) >= 3]
 
 
 def reverse_dns(ip):
-    """Look up the PTR hostname for an IP. Returns None if no record exists."""
     try:
         rev     = dns.reversename.from_address(ip)
         answers = dns.resolver.resolve(rev, "PTR", lifetime=TIMEOUT)
@@ -66,7 +64,6 @@ def reverse_dns(ip):
 
 
 def has_k12_indicator(hostname):
-    """Return True if the hostname contains any K-12 keyword."""
     for kw in K12_INDICATORS:
         if re.search(r"(?<![a-z])" + re.escape(kw) + r"(?![a-z])", hostname):
             return True
@@ -74,17 +71,16 @@ def has_k12_indicator(hostname):
 
 
 def classify(hostname, keywords):
-    """Return match quality: 'match', 'partial_match', 'no_match', or 'no_record'."""
+    """Returns 'match', 'partial_match', 'no_match', or 'no_record'."""
     if hostname is None:
         return "no_record"
     h = hostname.lower()
 
-    # Reject another state's k12 domain immediately
     state_match = re.search(r'\.k12\.([a-z]{2})\.us', h)
     if state_match and state_match.group(1) != 'ny':
         return "no_match"
 
-    # Need at least 2 school name keywords to match (prevents single-word false positives)
+    # Need 2+ keywords; one common word like "new" is not enough
     if sum(1 for kw in keywords if kw in h) >= 2:
         return "match"
 
@@ -95,7 +91,7 @@ def classify(hostname, keywords):
 
 
 def probe_block(cidr, keywords):
-    """Check the first N_PROBE_IPS IPs of a block. Returns True if any look like a school."""
+    """Check first N_PROBE_IPS IPs in the block. True if any look school-related."""
     try:
         net   = ipaddress.ip_network(cidr, strict=False)
         hosts = list(net.hosts())
@@ -114,7 +110,6 @@ def probe_block(cidr, keywords):
 
 
 def check_ip(ip, school_name, keywords):
-    """Reverse DNS one IP and classify the result. Called in a thread."""
     hostname   = reverse_dns(ip)
     match_type = classify(hostname, keywords)
     return {
@@ -130,7 +125,6 @@ def run(input_file=INPUT_FILE, output_file=OUTPUT_FILE, test_cap=None, force_fre
 
     checkpoint_file = output_file.replace(".csv", "_checkpoint.txt")
 
-    # Load checkpoint — which schools were already done in a previous run
     completed = set()
     if not force_fresh and os.path.exists(checkpoint_file) and os.path.exists(output_file):
         with open(checkpoint_file) as f:
@@ -142,7 +136,6 @@ def run(input_file=INPUT_FILE, output_file=OUTPUT_FILE, test_cap=None, force_fre
     with open(input_file, newline="", encoding="utf-8") as f:
         rows = list(csv.DictReader(f))
 
-    # Group blocks by school; skip schools with too many blocks
     block_count = defaultdict(int)
     for row in rows:
         block_count[row["school_name"].strip()] += 1
@@ -183,13 +176,11 @@ def run(input_file=INPUT_FILE, output_file=OUTPUT_FILE, test_cap=None, force_fre
                 keywords = get_keywords(school)
                 print(f"[{idx}/{len(remaining)}] {school[:45]} ...", flush=True)
 
-                # Probe-first: skip blocks where no sample IP looks like a school
                 all_cidrs = blocks_per_school[school]
                 probe_futures = {pool.submit(probe_block, cidr, keywords): cidr for cidr in all_cidrs}
                 promising_cidrs = [probe_futures[f] for f in as_completed(probe_futures) if f.result()]
                 print(f"  {len(promising_cidrs)}/{len(all_cidrs)} blocks passed probe", flush=True)
 
-                # Expand only the promising blocks into individual IPs
                 ips = []
                 for cidr in promising_cidrs:
                     try:
@@ -200,7 +191,6 @@ def run(input_file=INPUT_FILE, output_file=OUTPUT_FILE, test_cap=None, force_fre
                         continue
                 print(f"  {len(ips)} IPs to check", flush=True)
 
-                # Check all IPs in parallel
                 futures = {pool.submit(check_ip, ip, school, keywords): ip for ip in ips}
                 done = 0
                 for future in as_completed(futures):
@@ -219,7 +209,7 @@ def run(input_file=INPUT_FILE, output_file=OUTPUT_FILE, test_cap=None, force_fre
                 with open(checkpoint_file, "a") as ckpt:
                     ckpt.write(school + "\n")
 
-    print(f"\nDone {output_file}")
+    print(f"\nDone -> {output_file}")
     print(f"match: {tally['match']}  partial: {tally['partial_match']}  "
           f"no_match: {tally['no_match']}  no_record: {tally['no_record']}")
 

@@ -1,17 +1,13 @@
 """
-Probe Coverage Check
-
-For each school in the sample, count how many active RIPE Atlas probes are
-within 40 km. Used in the paper to show validation coverage.
-
-Output: data/outputs/probe_coverage.csv
+For each school in the sample, count active RIPE Atlas probes within 40 km.
+Used in the paper to show validation coverage.
 """
 
 import csv
 import time
 import requests
 
-SCHOOLS_FILE = "data/inputs/schools_selected.csv"
+SCHOOLS_FILE = "data/inputs/metro_schools_nyc.csv"
 OUTPUT_FILE  = "data/outputs/probe_coverage.csv"
 NEAR_KM      = 40
 
@@ -43,7 +39,8 @@ def run():
             "probes_within_40km": count,
             "has_probes":         "yes" if count > 0 else "no",
         })
-        print(f"[{i:3}/{len(schools)}] {'✓' if count > 0 else '✗'} {name[:50]:<50}  {count} probes")
+        marker = "ok" if count > 0 else "--"
+        print(f"[{i:3}/{len(schools)}] {marker} {name[:50]:<50}  {count} probes")
         time.sleep(0.15)
 
     with open(OUTPUT_FILE, "w", newline="", encoding="utf-8") as f:
@@ -53,7 +50,7 @@ def run():
         writer.writerows(results)
 
     covered = sum(1 for r in results if r["has_probes"] == "yes")
-    print(f"\nDone {OUTPUT_FILE}")
+    print(f"\nDone -> {OUTPUT_FILE}")
     print(f"Schools with probes within {NEAR_KM} km: {covered}/{len(results)} ({covered/len(results):.0%})")
 
 

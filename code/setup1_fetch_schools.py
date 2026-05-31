@@ -1,5 +1,5 @@
 """
-fetch_schools.py — Grid-based geographic sampling of NY K-12 schools.
+Grid-based geographic sampling of NY K-12 schools.
 
 Divides NY into a 9x9 grid and samples ~250 schools proportionally from each
 cell. Produces a geographically diverse set that avoids the NYC metro bias
@@ -26,7 +26,7 @@ RANDOM_SEED = 42
 
 
 def get_grid_cell(lat, lon):
-    """Map (lat, lon) to a (row, col) grid index. Returns None if outside NY."""
+    """(row, col) for a coordinate, or None if outside NY."""
     if not (MIN_LAT <= lat <= MAX_LAT and MIN_LON <= lon <= MAX_LON):
         return None
     cell_lat = (MAX_LAT - MIN_LAT) / GRID_SIZE
@@ -37,7 +37,6 @@ def get_grid_cell(lat, lon):
 
 
 def build_grid(schools):
-    """Bucket all schools into their grid cells."""
     grid    = {}
     outside = 0
     for school in schools:
@@ -57,12 +56,7 @@ def build_grid(schools):
 
 
 def sample_grid(grid, n_total, rng):
-    """
-    Sample from the grid:
-    1. At least 1 school per non-empty cell (geographic coverage).
-    2. Remaining slots allocated proportionally to cell size.
-    3. Random pick within each cell.
-    """
+    """At least 1 per non-empty cell, remaining slots proportional to cell size."""
     cells         = sorted(grid.keys())
     base_alloc    = {cell: 1 for cell in cells}
     remaining     = max(0, n_total - len(cells))
@@ -105,14 +99,13 @@ def run(input_file=INPUT_FILE, output_file=OUTPUT_FILE, n=N_SCHOOLS):
     rng     = random.Random(RANDOM_SEED)
     grid    = build_grid(schools)
     sampled = sample_grid(grid, n, rng)
-    sampled.sort(key=lambda s: -safe_lat(s))   # north south
+    sampled.sort(key=lambda s: -safe_lat(s))   # north to south
 
     with open(output_file, "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames)
         writer.writeheader()
         writer.writerows(sampled)
 
-    # Print distribution by latitude band
     cell_lat = (MAX_LAT - MIN_LAT) / GRID_SIZE
     print("\nLatitude distribution:")
     for row_idx in range(GRID_SIZE - 1, -1, -1):
@@ -121,7 +114,7 @@ def run(input_file=INPUT_FILE, output_file=OUTPUT_FILE, n=N_SCHOOLS):
         count  = sum(1 for s in sampled if lat_lo <= safe_lat(s) < lat_hi)
         print(f"  {lat_hi:.2f}-{lat_lo:.2f}N  {count:3d}  {'#' * count}")
 
-    print(f"\nDone. {len(sampled)} schools {output_file}")
+    print(f"\nDone. {len(sampled)} schools -> {output_file}")
     return sampled
 
 

@@ -2,31 +2,33 @@
 Run the full school IP identification pipeline.
 
 Phases:
-  0 — ARIN WHOIS discovery      (runs once, no radius)
-  1 — GeoLite2 geolocation      (per radius)
-  2 — Reverse DNS lookup        (per radius)
-  3 — WHOIS/ASN confirmation    (per radius)
-  3b— Fix district attribution  (per radius)
-  4 — RIPE Atlas validation     (per radius)
+  0   ARIN WHOIS discovery     (runs once, no radius)
+  1   GeoLite2 geolocation     (per radius)
+  2   Reverse DNS lookup       (per radius)
+  3   WHOIS/ASN confirmation   (per radius)
+  3b  Fix district attribution (per radius)
+  4   RIPE Atlas validation    (per radius)
 
-FORCE_RERUN_FROM: re-run from this phase number onward; None = skip already-done phases.
-TEST_CAP: limit phase 2 to N schools for timing estimates; None = full run.
+FORCE_RERUN_FROM: re-run from this phase onward. None = skip phases whose
+output already exists.
+TEST_CAP: limit phase 2 to N schools for timing estimates. None = full run.
 """
 
 import csv
 import os
 import shutil
 
-import phase0_arin             as phase0
-import phase1_geo_lookup       as phase1
-import phase2_dns_lookup       as phase2
-import phase3_confirm          as phase3
-import phase4_ripe_atlas       as phase4
+import phase0_arin              as phase0
+import phase1_geo_lookup        as phase1
+import phase2_dns_lookup        as phase2
+import phase3_confirm           as phase3
+import phase4_ripe_atlas        as phase4
 import phase3b_fix_attribution  as fix_attribution
 import post1_analysis           as analysis
 import post2_combined_summary   as combined_summary
 import post3_verify             as verify
 import post5_probe_coverage     as probe_check
+import post6_filter_stats       as filter_stats
 
 RADII            = [5, 10, 20, 30]
 SCHOOLS_FILE     = "data/inputs/metro_schools_nyc.csv"
@@ -52,8 +54,14 @@ def paths(radius):
     }
 
 
+def should_run(phase_num, output_path):
+    if FORCE_RERUN_FROM is not None and phase_num >= FORCE_RERUN_FROM:
+        return True
+    return not os.path.exists(output_path)
+
+
 def merge_candidates(arin_file, geo_file, output_file):
-    """Combine ARIN (phase 0) and GeoLite2 (phase 1) blocks into one deduplicated file."""
+    """Combine ARIN (phase 0) and GeoLite2 (phase 1) blocks, deduplicated."""
     rows = []
     seen = set()
     for filepath in [arin_file, geo_file]:
@@ -69,44 +77,37 @@ def merge_candidates(arin_file, geo_file, output_file):
         writer = csv.DictWriter(f, fieldnames=["cidr", "school_name"])
         writer.writeheader()
         writer.writerows(rows)
-    print(f"Merged candidates: {len(rows)} total blocks {output_file}")
+    print(f"Merged candidates: {len(rows)} total blocks -> {output_file}")
 
 
 if __name__ == "__main__":
 
-    # Copy old no-suffix phase1 file to _10km if needed (one-time migration)
+    # One-time migration: copy old no-suffix phase1 file to _10km
     bare   = "data/outputs/phase1_candidates.csv"
     target = "data/outputs/phase1_candidates_10km.csv"
     if not os.path.exists(target) and os.path.exists(bare):
         shutil.copy(bare, target)
-        print(f"Migrated {bare} {target}")
+        print(f"Migrated {bare} -> {target}")
 
-    # Phase 0 — ARIN discovery (runs once, not per radius)
-    run_phase0 = FORCE_RERUN_FROM is not None and 0 >= FORCE_RERUN_FROM or not os.path.exists(PHASE0_FILE)
-    if run_phase0:
+    if should_run(0, PHASE0_FILE):
         print("\n=== Phase 0: ARIN WHOIS Discovery ===")
         phase0.run(output_file=PHASE0_FILE)
     else:
-        print(f"Phase 0: skipping — {PHASE0_FILE} already exists")
+        print(f"Phase 0: skipping, {PHASE0_FILE} already exists")
 
     for radius in RADII:
-        print(f"\n{'='*60}\n  PIPELINE — {radius}km RADIUS\n{'='*60}")
+        print(f"\n{'='*60}\n  PIPELINE: {radius}km RADIUS\n{'='*60}")
         f = paths(radius)
 
-        # Phase 1 — find IP blocks near each school in the geo DB
-        run_p1 = FORCE_RERUN_FROM is not None and 1 >= FORCE_RERUN_FROM or not os.path.exists(f["phase1"])
-        if run_p1:
+        if should_run(1, f["phase1"]):
             print(f"\n=== Phase 1: Geo Lookup ({radius}km) ===")
             phase1.run(radius_km=radius, schools_file=SCHOOLS_FILE, output_file=f["phase1"])
         else:
-            print(f"Phase 1: skipping — {f['phase1']} already exists")
+            print(f"Phase 1: skipping, {f['phase1']} already exists")
 
-        # Merge ARIN + geo candidates for phase 2
         merge_candidates(PHASE0_FILE, f["phase1"], f["candidates"])
 
-        # Phase 2 — reverse DNS on merged candidates
-        run_p2 = FORCE_RERUN_FROM is not None and 2 >= FORCE_RERUN_FROM or not os.path.exists(f["phase2"])
-        if run_p2:
+        if should_run(2, f["phase2"]):
             print("\n=== Phase 2: Reverse DNS Lookup ===")
             force_fresh = FORCE_RERUN_FROM is not None and FORCE_RERUN_FROM <= 2
             phase2.run(
@@ -116,17 +117,14 @@ if __name__ == "__main__":
                 force_fresh = force_fresh,
             )
         else:
-            print(f"Phase 2: skipping — {f['phase2']} already exists")
+            print(f"Phase 2: skipping, {f['phase2']} already exists")
 
-        # Phase 3 — WHOIS/ASN confirmation
-        run_p3 = FORCE_RERUN_FROM is not None and 3 >= FORCE_RERUN_FROM or not os.path.exists(f["phase3"])
-        if run_p3:
+        if should_run(3, f["phase3"]):
             print("\n=== Phase 3: WHOIS/ASN Confirmation ===")
             phase3.run(input_file=f["phase2"], output_file=f["phase3"])
         else:
-            print(f"Phase 3: skipping — {f['phase3']} already exists")
+            print(f"Phase 3: skipping, {f['phase3']} already exists")
 
-        # Phase 3b — re-assign IPs to correct district using k12.ny.us PTR hostnames
         print("\n=== Phase 3b: Fix Attribution ===")
         fix_attribution.run(
             input_file   = f["phase3"],
@@ -134,9 +132,7 @@ if __name__ == "__main__":
             output_file  = f["phase3_reattr"],
         )
 
-        # Phase 4 — RIPE Atlas validation
-        run_p4 = FORCE_RERUN_FROM is not None and 4 >= FORCE_RERUN_FROM or not os.path.exists(f["phase4"])
-        if run_p4:
+        if should_run(4, f["phase4"]):
             print("\n=== Phase 4: RIPE Atlas Validation ===")
             phase4.run(
                 input_file   = f["phase3_reattr"],
@@ -144,9 +140,8 @@ if __name__ == "__main__":
                 output_file  = f["phase4"],
             )
         else:
-            print(f"Phase 4: skipping — {f['phase4']} already exists")
+            print(f"Phase 4: skipping, {f['phase4']} already exists")
 
-        # Analysis summary
         print("\n=== Analysis ===")
         analysis.run(
             input_file     = f["phase3_reattr"],
@@ -156,7 +151,6 @@ if __name__ == "__main__":
             output_file_p4 = f["analysis_p4"],
         )
 
-        # Two-tier combined summary (Tier 1 = RIG, Tier 2 = ARIN)
         print(f"\n=== Combined Summary ({radius}km) ===")
         combined_summary.run(
             phase0_file  = PHASE0_FILE,
@@ -165,14 +159,15 @@ if __name__ == "__main__":
             output_file  = f"data/outputs/combined_results_{radius}km.csv",
         )
 
-    # Verification — check high-confidence IPs against ARIN RDAP
     print("\n=== Manual Verification (ARIN RDAP) ===")
     verify_files = {f"{r}km": paths(r)["phase3"] for r in RADII}
     verify.run(files=verify_files, output_file="data/outputs/verification_results.csv")
 
-    # Probe coverage — how many schools have RIPE Atlas probes nearby
     print("\n=== RIPE Atlas Probe Coverage ===")
     probe_check.run()
+
+    print("\n=== Filter Impact Stats ===")
+    filter_stats.run()
 
     print("\n=== ALL DONE ===")
     for radius in RADII:

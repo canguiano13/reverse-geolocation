@@ -1,10 +1,10 @@
 """
-FCC Provider Lookup
+FCC provider lookup.
 
 For each school's census block, find which ISPs offer broadband service there.
 Uses FCC broadband deployment data (download for NY from broadbandmap.fcc.gov).
 
-Input:  data/school_blocks.csv   (from fcc_get_blocks.py)
+Input:  data/school_blocks.csv  (from fcc_get_blocks.py)
 Output: data/school_providers.csv
 """
 
@@ -14,7 +14,6 @@ import pandas as pd
 INPUT_FILE  = "data/school_blocks.csv"
 OUTPUT_FILE = "data/school_providers.csv"
 
-# FCC broadband deployment CSVs for New York state
 FCC_DATA_FILES = [
     "data/bdc_36_Cable_fixed_broadband_D25_04may2026.csv",
     "data/bdc_36_FibertothePremises_fixed_broadband_D25_04may2026.csv",
@@ -51,7 +50,7 @@ if __name__ == "__main__":
             print(f"{i}/{len(schools)}  {name[:45]:<45}  no block code")
             continue
 
-        providers = get_providers(block[:11])   # first 11 digits = census tract
+        providers = get_providers(block[:11])
         results.append({"school_name": name, "providers": "|".join(providers)})
         print(f"{i}/{len(schools)}  {name[:45]:<45}  {len(providers)} providers")
 
@@ -60,4 +59,4 @@ if __name__ == "__main__":
         writer.writeheader()
         writer.writerows(results)
 
-    print(f"\nDone {OUTPUT_FILE}")
+    print(f"\nDone -> {OUTPUT_FILE}")
