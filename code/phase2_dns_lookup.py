@@ -48,6 +48,14 @@ K12_INDICATORS = {
     "csd", "ufsd", "boces",
 }
 
+# Hostname fragments that indicate a cloud / CDN / hosting provider.
+# Used to count how many rejected IPs were cloud-owned (for paper stats).
+HOSTING_KEYWORDS = {
+    "cloudflare", "amazonaws", "googleusercontent", "googleapis",
+    "akamai", "fastly", "azure", "compute-1", "ec2",
+    "linode", "digitalocean", "ovh", "hetzner", "vultr",
+}
+
 
 def get_keywords(school_name):
     cleaned = re.sub(r"[^a-z0-9]", " ", school_name.lower())
@@ -70,15 +78,26 @@ def has_k12_indicator(hostname):
     return False
 
 
+def is_hosting_hostname(hostname):
+    return any(kw in hostname for kw in HOSTING_KEYWORDS)
+
+
 def classify(hostname, keywords):
-    """Returns 'match', 'partial_match', 'no_match', or 'no_record'."""
+    """
+    Returns one of:
+      match, partial_match, no_record,
+      no_match_other_state, no_match_cloud, no_match_other
+
+    Only 'match' and 'partial_match' are written to the output CSV.
+    The no_match_* subcategories are counted in the tally for paper stats.
+    """
     if hostname is None:
         return "no_record"
     h = hostname.lower()
 
     state_match = re.search(r'\.k12\.([a-z]{2})\.us', h)
     if state_match and state_match.group(1) != 'ny':
-        return "no_match"
+        return "no_match_other_state"
 
     # Need 2+ keywords; one common word like "new" is not enough
     if sum(1 for kw in keywords if kw in h) >= 2:
@@ -87,7 +106,10 @@ def classify(hostname, keywords):
     if has_k12_indicator(h):
         return "partial_match"
 
-    return "no_match"
+    if is_hosting_hostname(h):
+        return "no_match_cloud"
+
+    return "no_match_other"
 
 
 def probe_block(cidr, keywords):
@@ -121,7 +143,7 @@ def check_ip(ip, school_name, keywords):
     }
 
 
-def run(input_file=INPUT_FILE, output_file=OUTPUT_FILE, test_cap=None, force_fresh=False):
+def run(input_file=INPUT_FILE, output_file=OUTPUT_FILE, force_fresh=False):
 
     checkpoint_file = output_file.replace(".csv", "_checkpoint.txt")
 
@@ -150,11 +172,7 @@ def run(input_file=INPUT_FILE, output_file=OUTPUT_FILE, test_cap=None, force_fre
     if skipped:
         print(f"Skipping {skipped} schools with >{MAX_CIDRS} blocks")
 
-    schools = list(blocks_per_school.keys())
-    if test_cap:
-        schools = schools[:test_cap]
-        print(f"TEST MODE: {test_cap} schools (full run has {len(blocks_per_school)})")
-
+    schools   = list(blocks_per_school.keys())
     remaining = [s for s in schools if s not in completed]
     print(f"Processing {len(remaining)} schools ({len(completed)} already done)")
 
@@ -211,7 +229,10 @@ def run(input_file=INPUT_FILE, output_file=OUTPUT_FILE, test_cap=None, force_fre
 
     print(f"\nDone -> {output_file}")
     print(f"match: {tally['match']}  partial: {tally['partial_match']}  "
-          f"no_match: {tally['no_match']}  no_record: {tally['no_record']}")
+          f"cloud: {tally['no_match_cloud']}  "
+          f"other-state-k12: {tally['no_match_other_state']}  "
+          f"no_match: {tally['no_match_other']}  "
+          f"no_record: {tally['no_record']}")
 
 
 if __name__ == "__main__":
