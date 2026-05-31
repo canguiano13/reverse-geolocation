@@ -4,24 +4,24 @@ FCC provider lookup.
 For each school's census block, find which ISPs offer broadband service there.
 Uses FCC broadband deployment data (download for NY from broadbandmap.fcc.gov).
 
-Input:  data/school_blocks.csv  (from fcc_get_blocks.py)
-Output: data/school_providers.csv
+Input:  data/inputs/school_blocks.csv  (from setup2_fcc_blocks.py)
+Output: data/inputs/school_providers.csv
 """
 
 import csv
 import pandas as pd
 
-INPUT_FILE  = "data/school_blocks.csv"
-OUTPUT_FILE = "data/school_providers.csv"
+INPUT_FILE  = "data/inputs/school_blocks.csv"
+OUTPUT_FILE = "data/inputs/school_providers.csv"
 
 FCC_DATA_FILES = [
-    "data/bdc_36_Cable_fixed_broadband_D25_04may2026.csv",
-    "data/bdc_36_FibertothePremises_fixed_broadband_D25_04may2026.csv",
+    "data/inputs/bdc_36_Cable_fixed_broadband_D25_04may2026.csv",
+    "data/inputs/bdc_36_FibertothePremises_fixed_broadband_D25_04may2026.csv",
 ]
 
 
 def get_providers(census_tract):
-    """Return all ISP brand names serving a census tract (first 11 digits of block code)."""
+    """All ISP brand names serving a census tract (first 11 digits of block code)."""
     providers = set()
     for file_path in FCC_DATA_FILES:
         try:
@@ -34,8 +34,8 @@ def get_providers(census_tract):
     return list(providers)
 
 
-if __name__ == "__main__":
-    with open(INPUT_FILE, newline="", encoding="utf-8") as f:
+def run(input_file=INPUT_FILE, output_file=OUTPUT_FILE):
+    with open(input_file, newline="", encoding="utf-8") as f:
         schools = list(csv.DictReader(f))
 
     print(f"Looking up providers for {len(schools)} schools")
@@ -54,9 +54,13 @@ if __name__ == "__main__":
         results.append({"school_name": name, "providers": "|".join(providers)})
         print(f"{i}/{len(schools)}  {name[:45]:<45}  {len(providers)} providers")
 
-    with open(OUTPUT_FILE, "w", newline="", encoding="utf-8") as f:
+    with open(output_file, "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=["school_name", "providers"])
         writer.writeheader()
         writer.writerows(results)
 
-    print(f"\nDone -> {OUTPUT_FILE}")
+    print(f"\nDone -> {output_file}")
+
+
+if __name__ == "__main__":
+    run()

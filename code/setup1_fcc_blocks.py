@@ -2,17 +2,17 @@
 FCC census block lookup.
 
 For each school's GPS coordinates, ask the FCC API which census block it falls in.
-That block ID is used by fcc_get_providers.py to find ISPs serving the area.
+That block ID is used by setup2_fcc_providers.py to find ISPs serving the area.
 
 Input:  data/inputs/metro_schools_nyc.csv
-Output: data/school_blocks.csv
+Output: data/inputs/school_blocks.csv
 """
 
 import csv
 import requests
 
 INPUT_FILE  = "data/inputs/metro_schools_nyc.csv"
-OUTPUT_FILE = "data/school_blocks.csv"
+OUTPUT_FILE = "data/inputs/school_blocks.csv"
 
 
 def get_census_block(lat, lon):
@@ -25,8 +25,8 @@ def get_census_block(lat, lon):
         return None
 
 
-if __name__ == "__main__":
-    with open(INPUT_FILE, newline="", encoding="utf-8") as f:
+def run(input_file=INPUT_FILE, output_file=OUTPUT_FILE):
+    with open(input_file, newline="", encoding="utf-8") as f:
         schools = list(csv.DictReader(f))
 
     print(f"Fetching census blocks for {len(schools)} schools")
@@ -40,10 +40,14 @@ if __name__ == "__main__":
         results.append({"school_name": name, "census_block": block or ""})
         print(f"{i}/{len(schools)}  {name[:45]:<45}  {block or 'not found'}")
 
-    with open(OUTPUT_FILE, "w", newline="", encoding="utf-8") as f:
+    with open(output_file, "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=["school_name", "census_block"])
         writer.writeheader()
         writer.writerows(results)
 
     found = sum(1 for r in results if r["census_block"])
-    print(f"\nDone. {found}/{len(results)} blocks found -> {OUTPUT_FILE}")
+    print(f"\nDone. {found}/{len(results)} blocks found -> {output_file}")
+
+
+if __name__ == "__main__":
+    run()

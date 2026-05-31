@@ -11,7 +11,6 @@ Phases:
 
 FORCE_RERUN_FROM: re-run from this phase onward. None = skip phases whose
 output already exists.
-TEST_CAP: limit phase 2 to N schools for timing estimates. None = full run.
 """
 
 import csv
@@ -27,17 +26,20 @@ import phase3b_fix_attribution  as fix_attribution
 import post1_analysis           as analysis
 import post2_combined_summary   as combined_summary
 import post3_verify             as verify
+import post4_recall_estimate    as recall_estimate
 import post5_probe_coverage     as probe_check
 import post6_filter_stats       as filter_stats
+import code.setup1_fcc_blocks        as fcc_blocks
+import code.setup2_fcc_providers     as fcc_providers
 
 RADII            = [5, 10, 20, 30]
 SCHOOLS_FILE     = "data/inputs/metro_schools_nyc.csv"
 # SCHOOLS_FILE   = "data/inputs/targeted_schools.csv"
 # SCHOOLS_FILE   = "data/inputs/gigamaps_schools_ny.csv"
 FORCE_RERUN_FROM = None
-TEST_CAP         = None
 
-PHASE0_FILE = "data/outputs/phase0_arin.csv"
+PHASE0_FILE         = "data/outputs/phase0_arin.csv"
+SCHOOL_PROVIDERS    = "data/inputs/school_providers.csv"
 
 
 def paths(radius):
@@ -89,6 +91,15 @@ if __name__ == "__main__":
         shutil.copy(bare, target)
         print(f"Migrated {bare} -> {target}")
 
+    # One-time setup: generate school_providers.csv (FCC data) if missing
+    if not os.path.exists(SCHOOL_PROVIDERS):
+        print("\n=== Setup: FCC census blocks ===")
+        fcc_blocks.run(input_file=SCHOOLS_FILE)
+        print("\n=== Setup: FCC providers ===")
+        fcc_providers.run()
+    else:
+        print(f"Setup: skipping, {SCHOOL_PROVIDERS} already exists")
+
     if should_run(0, PHASE0_FILE):
         print("\n=== Phase 0: ARIN WHOIS Discovery ===")
         phase0.run(output_file=PHASE0_FILE)
@@ -113,7 +124,6 @@ if __name__ == "__main__":
             phase2.run(
                 input_file  = f["candidates"],
                 output_file = f["phase2"],
-                test_cap    = TEST_CAP,
                 force_fresh = force_fresh,
             )
         else:
@@ -169,6 +179,9 @@ if __name__ == "__main__":
     print("\n=== Filter Impact Stats ===")
     filter_stats.run()
 
+    print("\n=== Recall Estimate ===")
+    recall_estimate.run()
+
     print("\n=== ALL DONE ===")
     for radius in RADII:
         f = paths(radius)
@@ -178,3 +191,4 @@ if __name__ == "__main__":
         print(f"    Combined summary : data/outputs/combined_results_{radius}km.csv")
     print(f"\n  ARIN blocks  : {PHASE0_FILE}")
     print(f"  Verification : data/outputs/verification_results.csv")
+    print(f"  Recall       : data/outputs/recall_estimate.csv")
