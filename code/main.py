@@ -29,13 +29,14 @@ import post3_verify             as verify
 import post4_recall_estimate    as recall_estimate
 import post5_probe_coverage     as probe_check
 import post6_filter_stats       as filter_stats
-import code.setup1_fcc_blocks        as fcc_blocks
-import code.setup2_fcc_providers     as fcc_providers
+import setup1_fcc_blocks        as fcc_blocks
+import setup2_fcc_providers     as fcc_providers
 
 RADII            = [5, 10, 20, 30]
-SCHOOLS_FILE     = "data/inputs/metro_schools_nyc.csv"
-# SCHOOLS_FILE   = "data/inputs/targeted_schools.csv"
-# SCHOOLS_FILE   = "data/inputs/gigamaps_schools_ny.csv"
+SCHOOLS_FILE     = "data/inputs/schools_selected.csv"   # 192 schools, statewide NY grid sample
+# SCHOOLS_FILE   = "data/inputs/metro_schools_nyc.csv"  # 5,886 schools, NYC metro only
+# SCHOOLS_FILE   = "data/inputs/gigamaps_schools_ny.csv"# 13,143 schools, full NY (slow)
+# SCHOOLS_FILE   = "data/inputs/targeted_schools.csv"   # small hand-curated debug list
 FORCE_RERUN_FROM = None
 
 PHASE0_FILE         = "data/outputs/phase0_arin.csv"
