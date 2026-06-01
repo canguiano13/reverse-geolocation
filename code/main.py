@@ -29,6 +29,7 @@ import post3_verify             as verify
 import post4_recall_estimate    as recall_estimate
 import post5_probe_coverage     as probe_check
 import post6_filter_stats       as filter_stats
+import post7_url_verify         as url_verify
 import setup2_fcc_blocks        as fcc_blocks
 import setup3_fcc_providers     as fcc_providers
 
@@ -183,6 +184,9 @@ if __name__ == "__main__":
     print("\n=== Recall Estimate ===")
     recall_estimate.run()
 
+    print("\n=== URL Forward DNS Verification ===")
+    url_verify.run()
+
     print("\n=== ALL DONE ===")
     for radius in RADII:
         f = paths(radius)
@@ -193,3 +197,4 @@ if __name__ == "__main__":
     print(f"\n  ARIN blocks  : {PHASE0_FILE}")
     print(f"  Verification : data/outputs/verification_results.csv")
     print(f"  Recall       : data/outputs/recall_estimate.csv")
+    print(f"  URL verify   : data/outputs/url_verification.csv")

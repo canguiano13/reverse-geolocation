@@ -114,7 +114,11 @@ def run(input_file=INPUT_FILE, schools_file=SCHOOLS_FILE, output_file=OUTPUT_FIL
             attributed           = matched_name or row["school_name"]
             row["school_name"]   = DISPLAY_NAMES.get(attributed, attributed)
             row["district_code"] = code
-            row["district_type"] = DISTRICT_FLAGS.get(code, "public")
+            if matched_name is None:
+                row["district_type"] = "unresolved"
+                stats["unresolved"] += 1
+            else:
+                row["district_type"] = DISTRICT_FLAGS.get(code, "public")
             stats["k12_domain"] += 1
         else:
             row["geo_school"]    = row["school_name"]
@@ -143,7 +147,11 @@ def run(input_file=INPUT_FILE, schools_file=SCHOOLS_FILE, output_file=OUTPUT_FIL
         print(f"  {total:>5} IPs  H={counts['high']} M={counts['medium']} L={counts['low']}  {district}")
 
     print(f"\nDone. Written to {output_file}")
-    print(f"Re-attributed: {stats['k12_domain']}  kept original: {stats['no_domain']}")
+    print(f"Re-attributed: {stats['k12_domain']}  kept original: {stats['no_domain']}  "
+          f"unresolved: {stats['unresolved']}")
+    if stats["unresolved"]:
+        unresolved_codes = [code for code, name in code_cache.items() if name is None]
+        print(f"Unresolved district codes (add to MANUAL_MAPPINGS): {unresolved_codes}")
 
 
 if __name__ == "__main__":

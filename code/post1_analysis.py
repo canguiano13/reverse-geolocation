@@ -11,7 +11,7 @@ from collections import defaultdict
 
 INPUT_FILE     = "data/outputs/phase3_confirmed.csv"
 PHASE4_FILE    = "data/outputs/phase4_validated.csv"
-SCHOOLS_FILE   = "data/inputs/metro_schools_nyc.csv"
+SCHOOLS_FILE   = "data/inputs/schools_selected.csv"
 OUTPUT_FILE    = "data/outputs/analysis_summary.csv"
 OUTPUT_FILE_P4 = "data/outputs/analysis_summary_phase4.csv"
 

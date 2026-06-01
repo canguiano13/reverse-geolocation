@@ -30,7 +30,7 @@ NEAR_KM       = 40
 FAR_KM        = 100
 
 VALIDATE           = {"high"}   # ~30 credits per IP
-MAX_IPS_PER_SCHOOL = 3          # cap per school: thousands of IPs are "high"
+MAX_IPS_PER_SCHOOL = 20         # cap per school: enough for representative validation
 
 
 def distance_km(lat1, lon1, lat2, lon2):

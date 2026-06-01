@@ -11,7 +11,7 @@ import math
 from collections import defaultdict
 import maxminddb
 
-SCHOOLS_FILE = "data/inputs/gigamaps_schools_ny.csv"
+SCHOOLS_FILE = "data/inputs/schools_selected.csv"
 OUTPUT_FILE  = "data/outputs/phase1_candidates.csv"
 DB_FILE      = "data/inputs/GeoLite2-City.mmdb"
 RADIUS_KM    = 10
@@ -111,6 +111,11 @@ def run(radius_km=RADIUS_KM, schools_file=SCHOOLS_FILE, output_file=OUTPUT_FILE)
     with open(output_file, "w", newline="", encoding="utf-8") as out_f:
         writer = csv.DictWriter(out_f, fieldnames=["cidr", "school_name"])
         writer.writeheader()
+        import datetime
+        with maxminddb.open_database(DB_FILE) as _db:
+            build_epoch = _db.metadata().build_epoch
+            build_date  = datetime.datetime.utcfromtimestamp(build_epoch).strftime("%Y-%m-%d")
+        print(f"GeoLite2-City build date: {build_date}  (record this for reproducibility)")
         print(f"Scanning {DB_FILE} ...")
         n = scan_database(DB_FILE, school_grid, GRID_DEG, radius_km, seen_cidrs, writer)
         print(f"  {n} blocks found")
