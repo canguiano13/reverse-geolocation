@@ -4,6 +4,15 @@ Verify high-confidence IPs against ARIN RDAP.
 For every high-confidence IP from phase 3, look up the actual owner in ARIN
 and classify as TRUE_POSITIVE, FALSE_POSITIVE, or MANUAL_CHECK.
 
+Verdict logic (in order):
+  1. Hostname is in *.k12.ny.us  → TRUE_POSITIVE  (NY State-managed DNS zone)
+  2. Hostname is in *.k12.XX.us where XX != ny → FALSE_POSITIVE (different state)
+  3. ARIN org name contains school/education keyword AND a NY indicator → TRUE_POSITIVE
+  4. Anything else → MANUAL_CHECK (requires human review)
+
+Note: all current high-confidence IPs pass rule 1, so precision is driven entirely
+by the .k12.ny.us signal rather than ARIN org name matching.
+
 Output: verification_results.csv
 """
 
@@ -12,33 +21,15 @@ import re
 import time
 import requests
 
-FILES = {
-    "10km": "data/outputs/phase3_confirmed_10km.csv",
-    "20km": "data/outputs/phase3_confirmed_20km.csv",
-}
 OUTPUT_FILE = "data/outputs/verification_results.csv"
 ARIN_URL    = "https://rdap.arin.net/registry/ip/{}"
 
-# Hardcoded verdicts for IPs already manually verified
-KNOWN_VERDICTS = {
-    "63.119.227.174": ("FALSE_POSITIVE", "Holmdel Board of Education is in New Jersey, not NY"),
-    "24.39.160.166":  ("FALSE_POSITIVE", "Albany Academy is a different private school"),
-    "24.103.2.227":   ("FALSE_POSITIVE", "'new' matched 'New Hyde Park' only"),
-    "67.55.77.75":    ("FALSE_POSITIVE", "'new' matched 'New Hyde Park' only"),
-    "65.242.140.38":  ("FALSE_POSITIVE", "Howard Press is a printing company"),
-    "24.103.218.34":  ("TRUE_POSITIVE",  "Mountain Lake Academy is a real K-12 school in Lake Placid, NY"),
-    "64.19.74.218":   ("FALSE_POSITIVE", "Slic Network Solutions does not serve Herkimer County"),
-}
-
-KNOWN_NON_SCHOOLS = [
-    "baker hughes", "howard press", "howardpress", "polaner", "webair",
-    "newopportunitiesnow", "mainstreet", "zayo", "shorter university",
-    "comcast", "verizon", "alter.net", "lakeworth", "greenwood", "tamworth",
-]
+NY_INDICATORS  = {"ny", "new york", "newyork"}
+EDU_KEYWORDS   = {"school", "k12", "district", "education", "academy", "boces", "ufsd"}
 
 
 def arin_lookup(ip):
-    """Returns (org_name, country)."""
+    """Returns (org_name, country) from ARIN RDAP."""
     try:
         r = requests.get(ARIN_URL.format(ip), timeout=8)
         if r.status_code != 200:
@@ -61,52 +52,43 @@ def arin_lookup(ip):
         return "", ""
 
 
-def classify(ip, hostname, school_name, org):
-    """Returns (verdict, reason)."""
-    if ip in KNOWN_VERDICTS:
-        return KNOWN_VERDICTS[ip]
+def classify(hostname, org):
+    """
+    Returns (verdict, reason).
 
+    TRUE_POSITIVE  — confirmed as a NY K-12 school IP
+    FALSE_POSITIVE — confirmed as NOT a NY K-12 school IP
+    MANUAL_CHECK   — cannot be automatically determined
+    """
     h = hostname.lower()
     o = org.lower()
 
+    # Rule 1: NY State-managed DNS zone — definitive proof
     if re.search(r'\.k12\.ny\.us', h):
         return "TRUE_POSITIVE", "hostname is .k12.ny.us"
 
+    # Rule 2: Another state's K-12 zone — definitive rejection
     state = re.search(r'\.k12\.([a-z]{2})\.us', h)
     if state and state.group(1) != "ny":
         return "FALSE_POSITIVE", f"hostname is .k12.{state.group(1)}.us (different state)"
 
-    for location in ["florida", "indiana", "texas", "california", ".fl.", ".in.", ".tx.", ".ca."]:
-        if location in h and "comcast" in h:
-            return "FALSE_POSITIVE", f"Comcast server in another state ({location})"
-
-    if "broadcast.zip.zayo.com" in h:
-        return "FALSE_POSITIVE", "Zayo fiber broadcast address"
-
-    if ".edu" in h and not any(ny in h for ny in ["cuny", "suny", "cornell", "columbia", "nyu"]):
-        return "FALSE_POSITIVE", "non-NY university hostname"
-
-    if any(w in o for w in ["school", "k12", "district", "education"]):
-        if any(w in o for w in ["ny", "new york", "scarsdale", "massapequa"]):
-            return "TRUE_POSITIVE", f"ARIN org is a NY school: {org}"
-
-    for name in KNOWN_NON_SCHOOLS:
-        if name in o or name in h:
-            return "FALSE_POSITIVE", f"known non-school: {name}"
-
-    # Single-word "new" matches "New Hyde Park" type false positives
-    school_words   = set(school_name.lower().split())
-    hostname_words = set(re.sub(r"[^a-z0-9]", " ", h).split())
-    if school_words & hostname_words == {"new"}:
-        return "FALSE_POSITIVE", "only 'new' matched, New Hyde Park false positive"
+    # Rule 3: ARIN org name contains education keyword + NY indicator
+    if any(kw in o for kw in EDU_KEYWORDS) and any(ny in o for ny in NY_INDICATORS):
+        return "TRUE_POSITIVE", f"ARIN org is a NY school: {org}"
 
     return "MANUAL_CHECK", f"org={org or 'unknown'}, hostname={hostname}"
 
 
 def run(files=None, output_file=OUTPUT_FILE):
     if files is None:
-        files = FILES
+        files = {
+            "5km":  "data/outputs/phase3_confirmed_5km.csv",
+            "10km": "data/outputs/phase3_confirmed_10km.csv",
+            "20km": "data/outputs/phase3_confirmed_20km.csv",
+            "30km": "data/outputs/phase3_confirmed_30km.csv",
+        }
 
+    # Deduplicate across radii — same IP+hostname only verified once
     seen      = {}
     run_label = {}
     for run_name, filepath in files.items():
@@ -138,7 +120,7 @@ def run(files=None, output_file=OUTPUT_FILE):
             print(f"[{i}/{len(seen)}] cached: {ip}", end=" ", flush=True)
 
         org, country    = arin_cache[ip]
-        verdict, reason = classify(ip, hostname, school, org)
+        verdict, reason = classify(hostname, org)
         print(f"-> {verdict}")
 
         results.append({

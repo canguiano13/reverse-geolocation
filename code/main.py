@@ -29,8 +29,8 @@ import post3_verify             as verify
 import post4_recall_estimate    as recall_estimate
 import post5_probe_coverage     as probe_check
 import post6_filter_stats       as filter_stats
-import setup1_fcc_blocks        as fcc_blocks
-import setup2_fcc_providers     as fcc_providers
+import setup2_fcc_blocks        as fcc_blocks
+import setup3_fcc_providers     as fcc_providers
 
 RADII            = [5, 10, 20, 30]
 SCHOOLS_FILE     = "data/inputs/schools_selected.csv"   # 192 schools, statewide NY grid sample
