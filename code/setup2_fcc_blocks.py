@@ -4,14 +4,14 @@ FCC census block lookup.
 For each school's GPS coordinates, ask the FCC API which census block it falls in.
 That block ID is used by setup3_fcc_providers.py to find ISPs serving the area.
 
-Input:  data/inputs/metro_schools_nyc.csv
+Input:  data/inputs/schools_selected.csv
 Output: data/inputs/school_blocks.csv
 """
 
 import csv
 import requests
 
-INPUT_FILE  = "data/inputs/metro_schools_nyc.csv"
+INPUT_FILE  = "data/inputs/schools_selected.csv"
 OUTPUT_FILE = "data/inputs/school_blocks.csv"
 
 

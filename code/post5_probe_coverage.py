@@ -7,7 +7,7 @@ import csv
 import time
 import requests
 
-SCHOOLS_FILE = "data/inputs/metro_schools_nyc.csv"
+SCHOOLS_FILE = "data/inputs/schools_selected.csv"
 OUTPUT_FILE  = "data/outputs/probe_coverage.csv"
 NEAR_KM      = 40
 
