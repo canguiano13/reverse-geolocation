@@ -1,13 +1,7 @@
-"""
-Phase 2: reverse DNS lookup.
+"""Phase 2: reverse DNS over Phase 1 candidates.
 
-For every IP block from phase 1, check what hostname each IP resolves to.
-Keep IPs whose hostname contains the school's name or a K-12 keyword.
-
-Probe-first: check 5 IPs per block before expanding all 254. If none look
-school-related, skip the whole block.
-
-Checkpointing: saves progress after each school so a crashed run can resume.
+Probe-first: check 5 IPs per /24 before expanding the block. Checkpoints
+per school so a killed run can resume.
 """
 
 import csv
@@ -21,39 +15,25 @@ from concurrent.futures import ThreadPoolExecutor, as_completed, TimeoutError as
 import dns.resolver
 import dns.reversename
 
-# Global socket cap — ensures no individual socket op hangs longer than this,
-# even if dnspython's own lifetime= parameter fails to enforce it.
-socket.setdefaulttimeout(2.0)
-
-# --- Custom DNS resolver bypassing the macOS system resolver (mDNSResponder).
-# mDNSResponder throttles aggressively under sustained PTR query load (30+
-# schools of reverse lookups) and silently drops queries, causing every batch
-# to time out and return 0 results.  Querying 8.8.8.8/1.1.1.1 directly fixes
-# this.  configure=False prevents reading /etc/resolv.conf.
-def _make_resolver():
-    r = dns.resolver.Resolver(configure=False)
-    r.nameservers = ["8.8.8.8", "8.8.4.4", "1.1.1.1"]
-    r.timeout  = 1.5   # per-nameserver query timeout (s)
-    r.lifetime = 3.0   # total resolution lifetime across all nameservers (s)
-    return r
-
-_RESOLVER = _make_resolver()
-
-INPUT_FILE  = "data/outputs/phase1_candidates.csv"
+INPUT_FILE = "data/outputs/phase1_candidates.csv"
 OUTPUT_FILE = "data/outputs/phase2_filtered.csv"
 
-TIMEOUT      = 1.0
-WORKERS      = 20    # kept low to avoid macOS OOM; 50 caused kills at ~school 31
-MAX_CIDRS    = 500   # skip schools with more candidate blocks than this.
-               # GeoLite2 assigns entire ISP aggregates to the nearest school
-               # coordinate; schools with thousands of blocks are false positives
-               # (Rachel Carson: 3058, Forest Hills: 3106, etc.).  Real K-12
-               # networks rarely span more than a few hundred /24s.
-N_PROBE_IPS  = 5     # IPs sampled per block in probe phase
-PROBE_BATCH  = 100   # submit probe futures in batches to cap pending-futures memory
-IP_BATCH     = 500   # submit IP-check futures in batches to cap pending-futures memory
+TIMEOUT = 1.0
+WORKERS = 20
+MAX_CIDRS = 500          # schools beyond this are GeoLite2 ISP-aggregate noise
+N_PROBE_IPS = 5
+PROBE_BATCH = 100
+IP_BATCH = 500
 
-# Generic words removed before extracting keywords from a school name.
+socket.setdefaulttimeout(2.0)
+
+# macOS mDNSResponder throttles after ~30 schools of PTR queries and silently
+# drops requests, so use public resolvers directly.
+_resolver = dns.resolver.Resolver(configure=False)
+_resolver.nameservers = ["8.8.8.8", "8.8.4.4", "1.1.1.1"]
+_resolver.timeout = 1.5
+_resolver.lifetime = 3.0
+
 STOP_WORDS = {
     "a", "an", "the", "of", "and", "in", "at", "for",
     "school", "schools", "district", "unified", "elementary", "middle",
@@ -64,8 +44,7 @@ STOP_WORDS = {
     "long", "island", "new", "york",
 }
 
-# Words in a hostname that indicate a school even without the school's name.
-# "sch" was excluded because it matched a Greek education domain (.att.sch.gr).
+# "sch" excluded — matched a Greek education domain (.att.sch.gr).
 K12_INDICATORS = {
     "k12", "school", "schools", "district", "unified", "elementary",
     "middle", "high", "schl",
@@ -74,8 +53,7 @@ K12_INDICATORS = {
     "csd", "ufsd", "boces",
 }
 
-# Hostname fragments that indicate a cloud / CDN / hosting provider.
-# Used to count how many rejected IPs were cloud-owned (for paper stats).
+# Only used to categorize rejections in the tally — not for filtering.
 HOSTING_KEYWORDS = {
     "cloudflare", "amazonaws", "googleusercontent", "googleapis",
     "akamai", "fastly", "azure", "compute-1", "ec2",
@@ -90,70 +68,49 @@ def get_keywords(school_name):
 
 def reverse_dns(ip):
     try:
-        rev     = dns.reversename.from_address(ip)
-        answers = _RESOLVER.resolve(rev, "PTR")
-        return str(answers[0]).rstrip(".")
+        rev = dns.reversename.from_address(ip)
+        return str(_resolver.resolve(rev, "PTR")[0]).rstrip(".")
     except Exception:
         return None
 
 
 def has_k12_indicator(hostname):
-    for kw in K12_INDICATORS:
-        if re.search(r"(?<![a-z])" + re.escape(kw) + r"(?![a-z])", hostname):
-            return True
-    return False
-
-
-def is_hosting_hostname(hostname):
-    return any(kw in hostname for kw in HOSTING_KEYWORDS)
+    return any(re.search(r"(?<![a-z])" + re.escape(kw) + r"(?![a-z])", hostname)
+               for kw in K12_INDICATORS)
 
 
 def classify(hostname, keywords):
-    """
-    Returns one of:
-      match, partial_match, no_record,
-      no_match_other_state, no_match_cloud, no_match_other
-
-    Only 'match' and 'partial_match' are written to the output CSV.
-    The no_match_* subcategories are counted in the tally for paper stats.
-    """
     if hostname is None:
         return "no_record"
     h = hostname.lower()
 
-    state_match = re.search(r'\.k12\.([a-z]{2})\.us', h)
-    if state_match and state_match.group(1) != 'ny':
+    state = re.search(r'\.k12\.([a-z]{2})\.us', h)
+    if state and state.group(1) != 'ny':
         return "no_match_other_state"
 
-    # Need 2+ keywords; one common word like "new" is not enough
     if sum(1 for kw in keywords if kw in h) >= 2:
         return "match"
 
     if has_k12_indicator(h):
         return "partial_match"
 
-    if is_hosting_hostname(h):
+    if any(kw in h for kw in HOSTING_KEYWORDS):
         return "no_match_cloud"
 
     return "no_match_other"
 
 
 def probe_block(cidr, keywords):
-    """Check first N_PROBE_IPS IPs in the block. True if any look school-related.
-
-    Intentionally sequential — avoids spawning a nested ThreadPoolExecutor per block
-    (which created WORKERS × N_PROBE_IPS ≈ 250 threads at once and caused OOM kills).
-    With TIMEOUT=1.0 and 5 probes the worst case is 5 s per block, but blocks run
-    in parallel via the outer pool so overall probe throughput is unchanged.
-    """
+    # Sequential probes per block — nested ThreadPoolExecutors here previously
+    # caused OOM (WORKERS × N_PROBE_IPS threads in flight).
     try:
-        net   = ipaddress.ip_network(cidr, strict=False)
+        net = ipaddress.ip_network(cidr, strict=False)
         hosts = list(net.hosts())
         if not hosts or not isinstance(net, ipaddress.IPv4Network):
             return False
         for ip in (str(h) for h in hosts[:N_PROBE_IPS]):
-            hostname = reverse_dns(ip)
-            if hostname and classify(hostname, keywords) in ("match", "partial_match"):
+            host = reverse_dns(ip)
+            if host and classify(host, keywords) in ("match", "partial_match"):
                 return True
         return False
     except Exception:
@@ -161,19 +118,17 @@ def probe_block(cidr, keywords):
 
 
 def check_ip(ip, school_name, keywords):
-    hostname   = reverse_dns(ip)
-    match_type = classify(hostname, keywords)
+    hostname = reverse_dns(ip)
     return {
-        "ip_address":    ip,
-        "school_name":   school_name,
+        "ip_address": ip,
+        "school_name": school_name,
         "district_name": "",
-        "hostname":      hostname or "",
-        "match_type":    match_type,
+        "hostname": hostname or "",
+        "match_type": classify(hostname, keywords),
     }
 
 
 def run(input_file=INPUT_FILE, output_file=OUTPUT_FILE, force_fresh=False):
-
     checkpoint_file = output_file.replace(".csv", "_checkpoint.txt")
 
     completed = set()
@@ -193,27 +148,28 @@ def run(input_file=INPUT_FILE, output_file=OUTPUT_FILE, force_fresh=False):
 
     blocks_per_school = defaultdict(list)
     for row in rows:
-        school = row["school_name"].strip()
-        if block_count[school] <= MAX_CIDRS:
-            blocks_per_school[school].append(row["cidr"].strip())
+        s = row["school_name"].strip()
+        if block_count[s] <= MAX_CIDRS:
+            blocks_per_school[s].append(row["cidr"].strip())
 
     skipped = sum(1 for c in block_count.values() if c > MAX_CIDRS)
     if skipped:
         print(f"Skipping {skipped} schools with >{MAX_CIDRS} blocks")
 
-    schools   = list(blocks_per_school.keys())
-    remaining = [s for s in schools if s not in completed]
+    remaining = [s for s in blocks_per_school if s not in completed]
     print(f"Processing {len(remaining)} schools ({len(completed)} already done)")
 
     total_ips = 0
-    tally     = defaultdict(int)
+    tally = defaultdict(int)
 
-    file_mode = "a" if completed else "w"
-    with open(output_file, file_mode, newline="", encoding="utf-8") as out_f:
-        writer = csv.DictWriter(
-            out_f,
-            fieldnames=["ip_address", "school_name", "district_name", "hostname", "match_type"]
-        )
+    probe_batch_timeout = (PROBE_BATCH / WORKERS) * (N_PROBE_IPS * 2.5) + 10
+    ip_batch_timeout = (IP_BATCH / WORKERS) * 2.5 + 10
+
+    mode = "a" if completed else "w"
+    with open(output_file, mode, newline="", encoding="utf-8") as out_f:
+        writer = csv.DictWriter(out_f, fieldnames=[
+            "ip_address", "school_name", "district_name", "hostname", "match_type"
+        ])
         if not completed:
             writer.writeheader()
         out_f.flush()
@@ -225,33 +181,28 @@ def run(input_file=INPUT_FILE, output_file=OUTPUT_FILE, force_fresh=False):
 
                 all_cidrs = blocks_per_school[school]
 
-                # Submit probe futures in batches — same reason as IP batching below.
-                # Submitting all N CIDRs at once (e.g. 3000 for large schools) allocates
-                # thousands of Future objects before any result is drained.
-                promising_cidrs = []
-                for p_start in range(0, max(len(all_cidrs), 1), PROBE_BATCH):
-                    probe_batch = all_cidrs[p_start:p_start + PROBE_BATCH]
-                    probe_futures = {pool.submit(probe_block, cidr, keywords): cidr
-                                     for cidr in probe_batch}
-                    # timeout: PROBE_BATCH/WORKERS rounds × (N_PROBE_IPS × socket timeout + margin)
-                    # e.g. 100/20 × (5 × 2s) + 10s buffer = 60s hard ceiling per batch
-                    batch_timeout = (PROBE_BATCH / WORKERS) * (N_PROBE_IPS * 2.5) + 10
+                # Probe phase, batched. Wall-clock timeout per batch so a single
+                # hung DNS query can't stall everything.
+                promising = []
+                for start in range(0, max(len(all_cidrs), 1), PROBE_BATCH):
+                    batch = all_cidrs[start:start + PROBE_BATCH]
+                    futures = {pool.submit(probe_block, c, keywords): c for c in batch}
                     try:
-                        for f in as_completed(probe_futures, timeout=batch_timeout):
+                        for f in as_completed(futures, timeout=probe_batch_timeout):
                             try:
                                 if f.result():
-                                    promising_cidrs.append(probe_futures[f])
+                                    promising.append(futures[f])
                             except Exception:
                                 pass
                     except FuturesTimeout:
-                        hung = sum(1 for f in probe_futures if not f.done())
+                        hung = sum(1 for f in futures if not f.done())
                         print(f"  probe batch timed out ({hung} futures still running, skipping)",
                               flush=True)
 
-                print(f"  {len(promising_cidrs)}/{len(all_cidrs)} blocks passed probe", flush=True)
+                print(f"  {len(promising)}/{len(all_cidrs)} blocks passed probe", flush=True)
 
                 ips = []
-                for cidr in promising_cidrs:
+                for cidr in promising:
                     try:
                         net = ipaddress.ip_network(cidr, strict=False)
                         if isinstance(net, ipaddress.IPv4Network):
@@ -260,24 +211,21 @@ def run(input_file=INPUT_FILE, output_file=OUTPUT_FILE, force_fresh=False):
                         continue
                 print(f"  {len(ips)} IPs to check", flush=True)
 
-                # Submit IPs in batches to cap peak memory from pending futures.
-                # Submitting all N IPs at once allocates N Future objects before any
-                # result is drained; for schools with thousands of IPs this OOM'd.
                 done = 0
-                for batch_start in range(0, max(len(ips), 1), IP_BATCH):
-                    batch = ips[batch_start:batch_start + IP_BATCH]
+                for start in range(0, max(len(ips), 1), IP_BATCH):
+                    batch = ips[start:start + IP_BATCH]
                     futures = {pool.submit(check_ip, ip, school, keywords): ip for ip in batch}
-                    ip_batch_timeout = (IP_BATCH / WORKERS) * 2.5 + 10
                     try:
-                        for future in as_completed(futures, timeout=ip_batch_timeout):
-                            result = future.result()
-                            tally[result["match_type"]] += 1
+                        for f in as_completed(futures, timeout=ip_batch_timeout):
+                            r = f.result()
+                            tally[r["match_type"]] += 1
                             total_ips += 1
                             done += 1
-                            if result["match_type"] in ("match", "partial_match"):
-                                writer.writerow(result)
+                            if r["match_type"] in ("match", "partial_match"):
+                                writer.writerow(r)
                                 out_f.flush()
-                                print(f"  {result['ip_address']}  [{result['match_type']}]  {result['hostname']}", flush=True)
+                                print(f"  {r['ip_address']}  [{r['match_type']}]  {r['hostname']}",
+                                      flush=True)
                             if done % 10000 == 0:
                                 print(f"  ... {done}/{len(ips)} done", flush=True)
                     except FuturesTimeout:
@@ -289,12 +237,10 @@ def run(input_file=INPUT_FILE, output_file=OUTPUT_FILE, force_fresh=False):
                 with open(checkpoint_file, "a") as ckpt:
                     ckpt.write(school + "\n")
 
-                # Flush the custom resolver's PTR cache and run GC.
-                # Accumulated cache entries across many schools can reach hundreds of
-                # MB; clearing per-school keeps memory stable.
+                # Cache + GC reset per school — PTR cache grows fast otherwise.
                 try:
-                    if _RESOLVER.cache:
-                        _RESOLVER.cache.flush()
+                    if _resolver.cache:
+                        _resolver.cache.flush()
                 except Exception:
                     pass
                 gc.collect()
