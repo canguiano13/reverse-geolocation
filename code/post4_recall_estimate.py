@@ -19,6 +19,8 @@ import ipaddress
 import socket
 import concurrent.futures
 from collections import defaultdict
+import dns.resolver
+import dns.reversename
 
 PHASE0_FILE   = "data/outputs/phase0_arin.csv"
 COMBINED_FILE = "data/outputs/combined_results_10km.csv"
@@ -27,11 +29,27 @@ N_PROBE       = 50
 MAX_WORKERS   = 30
 TIMEOUT       = 3.0
 
+socket.setdefaulttimeout(TIMEOUT)
+
+
+# Custom resolver bypassing macOS mDNSResponder (which throttles aggressively
+# under sustained PTR load and silently drops queries — same issue we fixed
+# in phase2_dns_lookup.py).
+def _make_resolver():
+    r = dns.resolver.Resolver(configure=False)
+    r.nameservers = ["8.8.8.8", "8.8.4.4", "1.1.1.1"]
+    r.timeout  = 1.5
+    r.lifetime = 3.0
+    return r
+
+_RESOLVER = _make_resolver()
+
 
 def reverse_dns(ip):
     try:
-        socket.setdefaulttimeout(TIMEOUT)
-        return socket.gethostbyaddr(ip)[0].lower()
+        rev     = dns.reversename.from_address(ip)
+        answers = _RESOLVER.resolve(rev, "PTR")
+        return str(answers[0]).rstrip(".").lower()
     except Exception:
         return ""
 

@@ -21,6 +21,14 @@ def summarize(rows, all_schools, label):
     for row in rows:
         by_school[row["school_name"].strip()].append(row)
 
+    # Phase 3b re-attributes IPs to gigamaps district names that are NOT in
+    # schools_selected.csv. Without this union step, every re-attributed district
+    # was reported as "no results" and the actual results appeared nowhere.
+    sampled    = set(all_schools)
+    found      = set(by_school.keys())
+    reattributed_only = sorted(found - sampled)
+    all_keys   = list(all_schools) + reattributed_only
+
     high   = sum(1 for r in rows if r["confidence"] == "high")
     medium = sum(1 for r in rows if r["confidence"] == "medium")
     low    = sum(1 for r in rows if r["confidence"] == "low")
@@ -28,23 +36,26 @@ def summarize(rows, all_schools, label):
     print("=" * 50)
     print(f"  {label}")
     print("=" * 50)
-    print(f"  Schools processed   : {len(all_schools)}")
-    print(f"  Schools with results: {len(by_school)}")
-    print(f"  Schools no results  : {len(all_schools) - len(by_school)}")
-    print(f"  Total IPs           : {len(rows)}")
-    print(f"  High / Medium / Low : {high} / {medium} / {low}")
+    print(f"  Sampled schools          : {len(all_schools)}")
+    print(f"  Re-attributed districts  : {len(reattributed_only)}")
+    print(f"  Schools/districts w/ IPs : {len(by_school)}")
+    print(f"  Sampled schools w/o IPs  : {len(sampled - found)}")
+    print(f"  Total IPs                : {len(rows)}")
+    print(f"  High / Medium / Low      : {high} / {medium} / {low}")
     print("=" * 50)
 
     summary_rows = []
-    for school in all_schools:
+    for school in all_keys:
         school_rows = by_school.get(school, [])
+        is_reattributed = school in reattributed_only
+        source = "reattributed" if is_reattributed else "sampled"
+
         if not school_rows:
             summary_rows.append({
-                "school_name": school, "total_ips": 0,
+                "school_name": school, "source": source, "total_ips": 0,
                 "high": 0, "medium": 0, "low": 0,
                 "best_score": 0, "best_ip": "", "best_hostname": "",
             })
-            print(f"  {school[:45]:<45}  no results")
             continue
 
         h    = sum(1 for r in school_rows if r["confidence"] == "high")
@@ -54,19 +65,21 @@ def summarize(rows, all_schools, label):
 
         summary_rows.append({
             "school_name":   school,
+            "source":        source,
             "total_ips":     len(school_rows),
             "high":          h, "medium": m, "low": l,
             "best_score":    best["score"],
             "best_ip":       best["ip_address"],
             "best_hostname": best["hostname"],
         })
-        print(f"  {school[:45]:<45}  {len(school_rows)} IPs  H={h} M={m} L={l}  best={best['ip_address']} (score={best['score']})")
+        print(f"  [{source:<12}]  {school[:45]:<45}  {len(school_rows)} IPs  "
+              f"H={h} M={m} L={l}  best={best['ip_address']} (score={best['score']})")
 
     return summary_rows
 
 
 def write_summary(summary_rows, output_file):
-    fieldnames = ["school_name", "total_ips", "high", "medium", "low",
+    fieldnames = ["school_name", "source", "total_ips", "high", "medium", "low",
                   "best_score", "best_ip", "best_hostname"]
     with open(output_file, "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames)

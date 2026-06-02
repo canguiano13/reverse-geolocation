@@ -34,6 +34,7 @@ Output:
 
 import csv
 import ipaddress
+import re
 import socket
 import time
 from collections import defaultdict
@@ -41,6 +42,16 @@ from collections import defaultdict
 SCHOOLS_FILE = "data/inputs/schools_selected.csv"
 RADII        = [5, 10, 20, 30]
 OUTPUT_FILE  = "data/outputs/url_verification.csv"
+
+
+def extract_district_code(url):
+    """Extract the .k12.ny.us subdomain from a URL (e.g. mw, smithtown).
+    Returns None if the URL doesn't match the NYSED zone pattern.
+    """
+    if not url:
+        return None
+    m = re.search(r'([a-z0-9-]+)\.k12\.ny\.us', url.lower())
+    return m.group(1) if m else None
 
 
 def ip_to_24(ip):
@@ -58,20 +69,32 @@ def resolve_domain(domain):
 
 def run(schools_file=SCHOOLS_FILE, output_file=OUTPUT_FILE):
 
-    # Load school URL index keyed by school_name
-    url_index = {}
+    # Load TWO URL indexes from schools_selected.csv:
+    #   url_by_school    : school_name -> URL (original join key)
+    #   url_by_district  : district code -> any URL on that domain
+    #                      (district code = the subdomain before .k12.ny.us,
+    #                      e.g. "mw", "smithtown")
+    # The second index handles the common case where Phase 3b re-attributes
+    # IPs to a district whose specific name is not in the sampled set, but
+    # OTHER schools in the same district ARE sampled and share the URL domain.
+    url_by_school   = {}
+    url_by_district = {}
     with open(schools_file, newline="", encoding="utf-8") as f:
         for row in csv.DictReader(f):
             name = row["school_name"].strip()
             url  = row.get("trimmed_url", "").strip()
-            if url:
-                url_index[name] = url
+            if not url:
+                continue
+            url_by_school[name] = url
+            code = extract_district_code(url)
+            if code and code not in url_by_district:
+                url_by_district[code] = url
 
-    print(f"Loaded URLs for {len(url_index)} schools")
+    print(f"Loaded URLs for {len(url_by_school)} schools, "
+          f"covering {len(url_by_district)} .k12.ny.us district domains")
 
     # Collect unique high-confidence IPs across all radii.
-    # Use geo_school (original Phase 1 match) to join back to schools_selected.csv,
-    # since that file indexes individual schools, not re-attributed districts.
+    # Carry both geo_school AND district_code so we can try multiple join keys.
     seen = {}
     for radius in RADII:
         filepath = f"data/outputs/phase3_reattributed_{radius}km.csv"
@@ -80,16 +103,18 @@ def run(schools_file=SCHOOLS_FILE, output_file=OUTPUT_FILE):
                 for row in csv.DictReader(f):
                     if row.get("confidence") != "high":
                         continue
-                    ip         = row["ip_address"].strip()
-                    geo_school = row.get("geo_school", row["school_name"]).strip()
-                    district   = row["school_name"].strip()
-                    hostname   = row.get("hostname", "").strip()
+                    ip            = row["ip_address"].strip()
+                    geo_school    = row.get("geo_school", row["school_name"]).strip()
+                    district      = row["school_name"].strip()
+                    district_code = row.get("district_code", "").strip()
+                    hostname      = row.get("hostname", "").strip()
                     if ip not in seen:
                         seen[ip] = {
-                            "ip":         ip,
-                            "geo_school": geo_school,
-                            "district":   district,
-                            "hostname":   hostname,
+                            "ip":            ip,
+                            "geo_school":    geo_school,
+                            "district":      district,
+                            "district_code": district_code,
+                            "hostname":      hostname,
                         }
         except FileNotFoundError:
             print(f"Warning: {filepath} not found, skipping")
@@ -100,8 +125,27 @@ def run(schools_file=SCHOOLS_FILE, output_file=OUTPUT_FILE):
     results      = []
 
     for i, (ip, info) in enumerate(seen.items(), 1):
-        geo_school = info["geo_school"]
-        domain     = url_index.get(geo_school, "")
+        geo_school    = info["geo_school"]
+        district      = info["district"]
+        district_code = info["district_code"]
+
+        # Try join keys in order of preference:
+        #   1. district_code (Phase 3b output) -> any URL on that .k12.ny.us domain.
+        #      This is the strongest join: it matches IPs whose attribution comes
+        #      from the NYSED zone to URLs on the same NYSED zone.
+        #   2. geo_school     -> URL of that sampled school (original logic).
+        #   3. district name  -> URL of a sampled school with that exact name.
+        domain     = ""
+        join_via   = ""
+        if district_code and district_code in url_by_district:
+            domain   = url_by_district[district_code]
+            join_via = "district_code"
+        elif geo_school in url_by_school:
+            domain   = url_by_school[geo_school]
+            join_via = "geo_school"
+        elif district in url_by_school:
+            domain   = url_by_school[district]
+            join_via = "district_name"
 
         if not domain:
             verdict   = "NO_URL"
@@ -124,17 +168,19 @@ def run(schools_file=SCHOOLS_FILE, output_file=OUTPUT_FILE):
                 verdict = "NO_MATCH"
 
         if i % 200 == 0 or verdict in ("EXACT_MATCH", "SUBNET_MATCH"):
-            print(f"[{i}/{len(seen)}] {ip:<18}  {geo_school[:35]:<35}  "
+            print(f"[{i}/{len(seen)}] {ip:<18}  via={join_via or '-':<13}  "
                   f"{domain:<30}  -> {verdict}")
 
         results.append({
-            "ip_address": ip,
-            "geo_school": geo_school,
-            "district":   info["district"],
-            "hostname":   info["hostname"],
-            "domain":     domain,
-            "a_records":  "|".join(sorted(a_records)),
-            "verdict":    verdict,
+            "ip_address":    ip,
+            "geo_school":    geo_school,
+            "district":      district,
+            "district_code": district_code,
+            "hostname":      info["hostname"],
+            "domain":        domain,
+            "join_via":      join_via,
+            "a_records":     "|".join(sorted(a_records)),
+            "verdict":       verdict,
         })
 
     tally = defaultdict(int)
@@ -147,8 +193,8 @@ def run(schools_file=SCHOOLS_FILE, output_file=OUTPUT_FILE):
 
     with open(output_file, "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(
-            f, fieldnames=["ip_address", "geo_school", "district",
-                           "hostname", "domain", "a_records", "verdict"]
+            f, fieldnames=["ip_address", "geo_school", "district", "district_code",
+                           "hostname", "domain", "join_via", "a_records", "verdict"]
         )
         writer.writeheader()
         writer.writerows(results)
@@ -164,6 +210,23 @@ def run(schools_file=SCHOOLS_FILE, output_file=OUTPUT_FILE):
         print(f"\n  Match rate (IPs with resolvable URLs): {match_rate:.1%}")
         print(f"  ({tally['EXACT_MATCH']} exact + {tally['SUBNET_MATCH']} /24 subnet"
               f" out of {matchable} resolvable)")
+
+    # Frame the result for readers who don't already know the K-12 architecture
+    # pattern.  A 0% or near-0% match rate is the EXPECTED outcome for K-12
+    # institutions: public marketing websites are hosted on CMS platforms
+    # (Apptegy, Finalsite, etc.) fronted by CDNs (Fastly, Cloudflare), while
+    # the operational network IPs we identify are on county BOCES / WAN
+    # provider blocks.  NO_MATCH is therefore neutral evidence; it does not
+    # indicate a false positive.
+    if tally["NO_MATCH"] > 0 and tally["EXACT_MATCH"] == 0 and tally["SUBNET_MATCH"] == 0:
+        print()
+        print("  NOTE: A 0% match rate is the EXPECTED outcome for K-12.")
+        print("  Public school websites are typically CMS-hosted (Apptegy, Finalsite, etc.)")
+        print("  on commercial CDNs, while the network IPs identified by reverse-DNS")
+        print("  belong to county BOCES / WAN provider blocks. NO_MATCH is therefore")
+        print("  NEUTRAL evidence — it does NOT indicate the identified IPs are wrong.")
+        print("  Positive precision evidence in this script requires EXACT_MATCH or")
+        print("  SUBNET_MATCH, which is unlikely for K-12 institutions by design.")
 
 
 if __name__ == "__main__":

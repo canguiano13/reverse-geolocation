@@ -34,6 +34,8 @@ import socket
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from collections import defaultdict
+import dns.resolver
+import dns.reversename
 
 CANDIDATES_FILE = "data/outputs/phase_candidates_10km.csv"
 FILTERED_FILE   = "data/outputs/phase2_filtered_10km.csv"
@@ -45,11 +47,28 @@ TIMEOUT     = 1.5
 WORKERS     = 60
 SEED        = 42
 
+socket.setdefaulttimeout(TIMEOUT)
+
+
+# Custom resolver bypassing macOS mDNSResponder. Same pattern as
+# phase2_dns_lookup.py and post4_recall_estimate.py — the system resolver
+# throttles under sustained PTR load and silently drops queries, which
+# would cause the 200 × 40 = 8,000 lookups here to hang.
+def _make_resolver():
+    r = dns.resolver.Resolver(configure=False)
+    r.nameservers = ["8.8.8.8", "8.8.4.4", "1.1.1.1"]
+    r.timeout  = 1.5
+    r.lifetime = 3.0
+    return r
+
+_RESOLVER = _make_resolver()
+
 
 def reverse_dns(ip):
     try:
-        hostname = socket.gethostbyaddr(ip)[0]
-        return hostname.lower()
+        rev     = dns.reversename.from_address(ip)
+        answers = _RESOLVER.resolve(rev, "PTR")
+        return str(answers[0]).rstrip(".").lower()
     except Exception:
         return None
 
@@ -73,12 +92,21 @@ def check_block(cidr, school_name):
     Returns dict with verdict and any matching hostnames found.
     """
     try:
-        net   = ipaddress.ip_network(cidr, strict=False)
-        hosts = list(net.hosts())
+        net = ipaddress.ip_network(cidr, strict=False)
     except ValueError:
         return {"cidr": cidr, "school_name": school_name,
                 "verdict": "error", "ny_k12_found": "", "k12_found": "",
                 "ips_checked": 0, "total_hosts": 0}
+
+    # Skip IPv6: the pipeline is IPv4-only, and list(net.hosts()) on a large
+    # IPv6 prefix (e.g. /37 = 2^91 hosts) hangs forever trying to materialize
+    # the host list.
+    if not isinstance(net, ipaddress.IPv4Network):
+        return {"cidr": cidr, "school_name": school_name,
+                "verdict": "skipped_ipv6", "ny_k12_found": "", "k12_found": "",
+                "ips_checked": 0, "total_hosts": 0}
+
+    hosts = list(net.hosts())
 
     sample = random.sample(hosts, min(N_CHECK_IPS, len(hosts)))
 
@@ -144,11 +172,24 @@ def run(candidates_file=CANDIDATES_FILE, filtered_file=FILTERED_FILE,
         return
     print(f"Blocks kept by Phase 2: {len(kept_cidrs)}")
 
-    # Dropped = in candidates but no IP ended up in phase2 output
-    dropped = [(cidr, school)
-               for cidr, school in candidates.items()
-               if cidr not in kept_cidrs]
-    print(f"Dropped blocks (Phase 2 filtered out): {len(dropped)}")
+    # Dropped = in candidates but no IP ended up in phase2 output.
+    # Filter to IPv4 only — pipeline is IPv4-only and IPv6 prefixes can be huge.
+    dropped_all = [(cidr, school)
+                   for cidr, school in candidates.items()
+                   if cidr not in kept_cidrs]
+    dropped = []
+    n_ipv6  = 0
+    for cidr, school in dropped_all:
+        try:
+            net = ipaddress.ip_network(cidr, strict=False)
+            if isinstance(net, ipaddress.IPv4Network):
+                dropped.append((cidr, school))
+            else:
+                n_ipv6 += 1
+        except ValueError:
+            pass
+    print(f"Dropped blocks (Phase 2 filtered out): {len(dropped_all)}  "
+          f"(IPv4: {len(dropped)}, IPv6 skipped: {n_ipv6})")
 
     if not dropped:
         print("No dropped blocks found — nothing to audit.")

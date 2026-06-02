@@ -30,10 +30,14 @@ import post4_recall_estimate    as recall_estimate
 import post5_probe_coverage     as probe_check
 import post6_filter_stats       as filter_stats
 import post7_url_verify         as url_verify
+import post8_abandoned_cidrs    as abandoned_cidrs
+import post9_radius_sensitivity as radius_sensitivity
+import post10_recall_vs_arin    as recall_vs_arin
 import setup2_fcc_blocks        as fcc_blocks
 import setup3_fcc_providers     as fcc_providers
 
-RADII            = [5, 10, 20, 30]
+RADII            = [5, 10, 20]   # 30km dropped: same Tier-1 result as 20km
+                                  # at no extra information value
 SCHOOLS_FILE     = "data/inputs/schools_selected.csv"   # 192 schools, statewide NY grid sample
 # SCHOOLS_FILE   = "data/inputs/metro_schools_nyc.csv"  # 5,886 schools, NYC metro only
 # SCHOOLS_FILE   = "data/inputs/gigamaps_schools_ny.csv"# 13,143 schools, full NY (slow)
@@ -186,6 +190,15 @@ if __name__ == "__main__":
 
     print("\n=== URL Forward DNS Verification ===")
     url_verify.run()
+
+    print("\n=== Abandoned CIDRs (Phase 2 timeout/reject transparency) ===")
+    abandoned_cidrs.run()
+
+    print("\n=== Radius Sensitivity Comparison ===")
+    radius_sensitivity.run()
+
+    print("\n=== RIG Recall vs ARIN Ground Truth ===")
+    recall_vs_arin.run()
 
     print("\n=== ALL DONE ===")
     for radius in RADII:
