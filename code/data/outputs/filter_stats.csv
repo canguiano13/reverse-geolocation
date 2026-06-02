@@ -1,0 +1,5 @@
+radius_km,phase1_24s,phase1_schools_w_blocks,phase_merged_24s,phase2_matched_ips,phase2_unique_24s,phase2_schools_w_match,phase3_total_ips,phase3_unique_24s,phase3_high_conf_ips,phase3_high_conf_schools,phase3b_high_conf_districts
+5,88717,154,90166,4078,17,2,4078,17,4078,2,2
+10,125000,161,126444,4080,17,2,4080,17,4080,2,2
+20,140612,156,142049,4079,16,1,4079,16,4079,1,1
+30,145505,147,146940,4077,17,2,0,0,0,0,0

@@ -1,0 +1,91 @@
+radius_km,arin_district,arin_block_count,arin_total_ips,status,tier1_district,tier1_ip_count,tier1_ips_inside_arin,tier1_ips_outside_arin,ip_coverage_pct
+5,Albany Schoharie Schenectady BOCES,1,65536,ARIN_ONLY,,0,0,0,0.0
+5,BOCES,2,288,ARIN_ONLY,,0,0,0,0.0
+5,BOCES Southern Westchester Lower Hudson Regional Information Center,1,65536,ARIN_ONLY,,0,0,0,0.0
+5,Beacon Central School District,1,16,ARIN_ONLY,,0,0,0,0.0
+5,BrockportCentral School District,1,64,ARIN_ONLY,,0,0,0,0.0
+5,Broome - Tioga BOCES,1,4096,ARIN_ONLY,,0,0,0,0.0
+5,Canandaigua City School District,1,32,ARIN_ONLY,,0,0,0,0.0
+5,Clarkstown Central School District,1,4096,ARIN_ONLY,,0,0,0,0.0
+5,Dutchess County BOCES,1,4096,ARIN_ONLY,,0,0,0,0.0
+5,Eastern Suffolk BOCES,1,65536,ARIN_ONLY,,0,0,0,0.0
+5,GV/WFL BOCES Educational TechnologyService,1,16384,ARIN_ONLY,,0,0,0,0.0
+5,Greater Southern Tier (GST) BOCES,1,512,ARIN_ONLY,,0,0,0,0.0
+5,Greece Central School District,1,4096,ARIN_ONLY,,0,0,0,0.0
+5,Huntington Union Free School District,1,256,ARIN_ONLY,,0,0,0,0.0
+5,Kenmore-Town of Tonawanda Union Free School District,2,4352,ARIN_ONLY,,0,0,0,0.0
+5,Madison-Oneida BOCES,2,65792,ARIN_ONLY,,0,0,0,0.0
+5,Malverne Union Free School District,2,512,ARIN_ONLY,,0,0,0,0.0
+5,Monroe-Woodbury Central School District,1,4096,BOTH,Monroe Woodbury Middle School,4077,4077,0,99.54
+5,NYC BOARD OF EDUCATION,2,32,ARIN_ONLY,,0,0,0,0.0
+5,Northport-East Northport Union Free School District,2,1536,ARIN_ONLY,,0,0,0,0.0
+5,Nysernet/NYC Board of Education,2,1024,ARIN_ONLY,,0,0,0,0.0
+5,Orange-Ulster BOCES,1,4096,ARIN_ONLY,,0,0,0,0.0
+5,Rochester City School District,1,256,ARIN_ONLY,,0,0,0,0.0
+5,Sachem Central School District,1,4096,ARIN_ONLY,,0,0,0,0.0
+5,Smithtown Union Free School District,1,256,BOTH,Smithtown High School West,1,1,0,0.39
+5,South Huntington Union Free School District,1,256,ARIN_ONLY,,0,0,0,0.0
+5,Syracuse City School District,10,5120,ARIN_ONLY,,0,0,0,0.0
+5,Ulster County BOCES,2,16640,ARIN_ONLY,,0,0,0,0.0
+5,WASHINGTON SARATOGA WARREN HAMILTON & ESSEX BOCES,1,4096,ARIN_ONLY,,0,0,0,0.0
+5,Western Suffolk BOCES,1,32768,ARIN_ONLY,,0,0,0,0.0
+10,Albany Schoharie Schenectady BOCES,1,65536,ARIN_ONLY,,0,0,0,0.0
+10,BOCES,2,288,ARIN_ONLY,,0,0,0,0.0
+10,BOCES Southern Westchester Lower Hudson Regional Information Center,1,65536,ARIN_ONLY,,0,0,0,0.0
+10,Beacon Central School District,1,16,ARIN_ONLY,,0,0,0,0.0
+10,BrockportCentral School District,1,64,ARIN_ONLY,,0,0,0,0.0
+10,Broome - Tioga BOCES,1,4096,ARIN_ONLY,,0,0,0,0.0
+10,Canandaigua City School District,1,32,ARIN_ONLY,,0,0,0,0.0
+10,Clarkstown Central School District,1,4096,ARIN_ONLY,,0,0,0,0.0
+10,Dutchess County BOCES,1,4096,ARIN_ONLY,,0,0,0,0.0
+10,Eastern Suffolk BOCES,1,65536,ARIN_ONLY,,0,0,0,0.0
+10,GV/WFL BOCES Educational TechnologyService,1,16384,ARIN_ONLY,,0,0,0,0.0
+10,Greater Southern Tier (GST) BOCES,1,512,ARIN_ONLY,,0,0,0,0.0
+10,Greece Central School District,1,4096,ARIN_ONLY,,0,0,0,0.0
+10,Huntington Union Free School District,1,256,ARIN_ONLY,,0,0,0,0.0
+10,Kenmore-Town of Tonawanda Union Free School District,2,4352,ARIN_ONLY,,0,0,0,0.0
+10,Madison-Oneida BOCES,2,65792,ARIN_ONLY,,0,0,0,0.0
+10,Malverne Union Free School District,2,512,ARIN_ONLY,,0,0,0,0.0
+10,Monroe-Woodbury Central School District,1,4096,BOTH,Monroe Woodbury Middle School,4079,4079,0,99.58
+10,NYC BOARD OF EDUCATION,2,32,ARIN_ONLY,,0,0,0,0.0
+10,Northport-East Northport Union Free School District,2,1536,ARIN_ONLY,,0,0,0,0.0
+10,Nysernet/NYC Board of Education,2,1024,ARIN_ONLY,,0,0,0,0.0
+10,Orange-Ulster BOCES,1,4096,ARIN_ONLY,,0,0,0,0.0
+10,Rochester City School District,1,256,ARIN_ONLY,,0,0,0,0.0
+10,Sachem Central School District,1,4096,ARIN_ONLY,,0,0,0,0.0
+10,Smithtown Union Free School District,1,256,BOTH,Smithtown High School West,1,1,0,0.39
+10,South Huntington Union Free School District,1,256,ARIN_ONLY,,0,0,0,0.0
+10,Syracuse City School District,10,5120,ARIN_ONLY,,0,0,0,0.0
+10,Ulster County BOCES,2,16640,ARIN_ONLY,,0,0,0,0.0
+10,WASHINGTON SARATOGA WARREN HAMILTON & ESSEX BOCES,1,4096,ARIN_ONLY,,0,0,0,0.0
+10,Western Suffolk BOCES,1,32768,ARIN_ONLY,,0,0,0,0.0
+20,Albany Schoharie Schenectady BOCES,1,65536,ARIN_ONLY,,0,0,0,0.0
+20,BOCES,2,288,ARIN_ONLY,,0,0,0,0.0
+20,BOCES Southern Westchester Lower Hudson Regional Information Center,1,65536,ARIN_ONLY,,0,0,0,0.0
+20,Beacon Central School District,1,16,ARIN_ONLY,,0,0,0,0.0
+20,BrockportCentral School District,1,64,ARIN_ONLY,,0,0,0,0.0
+20,Broome - Tioga BOCES,1,4096,ARIN_ONLY,,0,0,0,0.0
+20,Canandaigua City School District,1,32,ARIN_ONLY,,0,0,0,0.0
+20,Clarkstown Central School District,1,4096,ARIN_ONLY,,0,0,0,0.0
+20,Dutchess County BOCES,1,4096,ARIN_ONLY,,0,0,0,0.0
+20,Eastern Suffolk BOCES,1,65536,ARIN_ONLY,,0,0,0,0.0
+20,GV/WFL BOCES Educational TechnologyService,1,16384,ARIN_ONLY,,0,0,0,0.0
+20,Greater Southern Tier (GST) BOCES,1,512,ARIN_ONLY,,0,0,0,0.0
+20,Greece Central School District,1,4096,ARIN_ONLY,,0,0,0,0.0
+20,Huntington Union Free School District,1,256,ARIN_ONLY,,0,0,0,0.0
+20,Kenmore-Town of Tonawanda Union Free School District,2,4352,ARIN_ONLY,,0,0,0,0.0
+20,Madison-Oneida BOCES,2,65792,ARIN_ONLY,,0,0,0,0.0
+20,Malverne Union Free School District,2,512,ARIN_ONLY,,0,0,0,0.0
+20,Monroe-Woodbury Central School District,1,4096,BOTH,Monroe Woodbury Middle School,4079,4079,0,99.58
+20,NYC BOARD OF EDUCATION,2,32,ARIN_ONLY,,0,0,0,0.0
+20,Northport-East Northport Union Free School District,2,1536,ARIN_ONLY,,0,0,0,0.0
+20,Nysernet/NYC Board of Education,2,1024,ARIN_ONLY,,0,0,0,0.0
+20,Orange-Ulster BOCES,1,4096,ARIN_ONLY,,0,0,0,0.0
+20,Rochester City School District,1,256,ARIN_ONLY,,0,0,0,0.0
+20,Sachem Central School District,1,4096,ARIN_ONLY,,0,0,0,0.0
+20,Smithtown Union Free School District,1,256,ARIN_ONLY,,0,0,0,0.0
+20,South Huntington Union Free School District,1,256,ARIN_ONLY,,0,0,0,0.0
+20,Syracuse City School District,10,5120,ARIN_ONLY,,0,0,0,0.0
+20,Ulster County BOCES,2,16640,ARIN_ONLY,,0,0,0,0.0
+20,WASHINGTON SARATOGA WARREN HAMILTON & ESSEX BOCES,1,4096,ARIN_ONLY,,0,0,0,0.0
+20,Western Suffolk BOCES,1,32768,ARIN_ONLY,,0,0,0,0.0

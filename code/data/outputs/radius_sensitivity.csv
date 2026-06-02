@@ -1,0 +1,5 @@
+radius,status,total_high_ips,n_districts,unique_24_blocks,ny_k12_ips,top_district,top_district_ips
+5,ok,4078,2,17,4078,Monroe Woodbury Middle School,4077
+10,ok,4080,2,17,4080,Monroe Woodbury Middle School,4079
+20,ok,4079,1,16,4079,Monroe Woodbury Middle School,4079
+30,missing,,,,,,
