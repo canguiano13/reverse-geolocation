@@ -4,6 +4,7 @@ code/data/bdc_36_FibertothePremises_fixed_broadband_D25_04may2026.csv
 code/data/phase1_candidates.csv
 code/data/GeoLite2-City.mmdb
 code/data/2026-03_categorized_ases.csv
+cloud-provider-ip-addresses/
 
 .DS_Store
 # Byte-compiled / optimized / DLL files
