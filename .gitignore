@@ -10,6 +10,7 @@ code/data/outputs/phase_candidates_5km.csv
 code/data/outputs/phase_candidates_10km.csv
 code/data/outputs/phase_candidates_20km.csv
 code/data/outputs/phase_candidates_30km.csv
+code/data/outputs/schools_with_income.csv
 cloud-provider-ip-addresses/
 
 .DS_Store
