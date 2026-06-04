@@ -1,26 +1,23 @@
+"""Phase 3: ASN/org confirmation.
 
+Scores each IP on four signals: dns_match, strong_dns_match, whois_match, fcc_match.
+ISP name matching uses TF-IDF brand keyword extraction (normalized IDF >= 0.7).
+Score 3+ = high confidence (or 2+ when strong_dns_match), 1 = low.
+ASN lookup uses IPinfo IP-to-ASN dataset (offline, no live RDAP calls).
+"""
 
 import csv
+import gzip
+import ipaddress
 import math
 import re
-import ipaddress
 from collections import Counter
-from ipwhois import IPWhois
 
-INPUT_FILE     = "data/outputs/phase2_filtered.csv"
-PROVIDERS_FILE = "data/inputs/school_providers.csv"
-ASDB_FILE      = "data/inputs/2026-03_categorized_ases.csv"
-OUTPUT_FILE    = "data/outputs/phase3_confirmed.csv"
+INPUT_FILE       = "data/outputs/phase2_filtered.csv"
+PROVIDERS_FILE   = "data/inputs/school_providers.csv"
+IPINFO_ASN_FILE  = "data/inputs/ipinfo/ipinfo_asn.csv.gz"
+OUTPUT_FILE      = "data/outputs/phase3_confirmed.csv"
 
-HOSTING_PROVIDERS = {
-    "cloudflare", "google", "amazon", "aws", "microsoft",
-    "azure", "fastly", "akamai", "digitalocean",
-}
-
-# WHOIS results cached by /24 prefix: IPs in the same block usually share an owner
-whois_cache = {}
-
-# Generic tokens stripped before TF-IDF tokenization
 _GENERIC_TOKENS = {
     "inc", "llc", "corp", "corporation", "co", "ltd", "the",
     "network", "networks", "communications", "communication",
@@ -28,33 +25,81 @@ _GENERIC_TOKENS = {
     "cable", "internet", "broadband", "company", "group",
 }
 
+# Backbone/transit providers that IPinfo sometimes tags as 'hosting'.
+# These are wholesale bandwidth providers that legitimately serve schools.
+# Verified against school_providers.csv -- only Zayo appears as an actual
+# NY school provider and is misclassified on some prefixes.
+_BACKBONE_OVERRIDE = {"zayo"}
 
-def load_edu_asns():
-    """Load ASNs classified as education from Stanford ASdb (exact category match)."""
-    EDU_CATEGORIES = {
-        "Education and Research",
-        "Elementary and Secondary Schools",
-        "Colleges, Universities, and Professional Schools",
-        "Other Schools, Instruction, and Exam Preparation and Testing",
-    }
-    edu_asns = set()
+# Module-level ASN lookup state
+_asn_entries = []   # sorted list of (net_start, net_end, prefix_len, asn, name, asn_type)
+_asn_cache   = {}   # /24 network_address_int -> (asn, name, asn_type)
+
+
+def load_ipinfo_asn(path):
+    global _asn_entries, _asn_cache
+    _asn_cache = {}
+    entries = []
+    with gzip.open(path, 'rt', encoding='utf-8') as f:
+        for row in csv.DictReader(f):
+            try:
+                net = ipaddress.ip_network(row['network'], strict=False)
+            except ValueError:
+                continue
+            if net.version != 4:
+                continue
+            asn_str = row['asn'].lstrip('AS').lstrip('as')
+            entries.append((
+                int(net.network_address),
+                int(net.broadcast_address),
+                net.prefixlen,
+                asn_str, row['name'], row['type'],
+            ))
+    entries.sort()
+    _asn_entries = entries
+    print(f"Loaded {len(_asn_entries)} IPinfo ASN entries")
+
+
+def lookup_ip_asn(ip_str):
+    """Return (asn, org_name, asn_type) for ip_str. Results cached by /24."""
     try:
-        with open(ASDB_FILE, newline="", encoding="utf-8") as f:
-            for row in csv.DictReader(f):
-                row_cats = {v.strip() for k, v in row.items()
-                            if "Category" in k and v and v.strip()}
-                if row_cats & EDU_CATEGORIES:
-                    asn = str(row.get("ASN", "")).strip().lstrip("AS").lstrip("as")
-                    if asn:
-                        edu_asns.add(asn)
-        print(f"Loaded {len(edu_asns)} educational ASNs")
-    except FileNotFoundError:
-        print(f"Warning: {ASDB_FILE} not found, educational ASN check disabled")
-    return edu_asns
+        key = int(ipaddress.ip_address(ip_str)) & 0xFFFFFF00
+    except ValueError:
+        return '', '', ''
+
+    if key in _asn_cache:
+        return _asn_cache[key]
+
+    ip_int = key  # /24 network address representative
+
+    # Binary search: rightmost entry where net_start <= ip_int
+    lo, hi = 0, len(_asn_entries)
+    while lo < hi:
+        mid = (lo + hi) // 2
+        if _asn_entries[mid][0] <= ip_int:
+            lo = mid + 1
+        else:
+            hi = mid
+
+    # Scan backwards for the most specific (longest prefix) entry containing ip_int.
+    # Stop once net_start falls outside the span of a /8 block -- no broader prefix
+    # is relevant for org-level attribution.
+    min_start = ip_int - (1 << 24)
+    best_plen = -1
+    result = ('', '', '')
+    for i in range(lo - 1, -1, -1):
+        net_start, net_end, plen, asn, name, asn_type = _asn_entries[i]
+        if net_start < min_start:
+            break
+        if net_end >= ip_int and plen > best_plen:
+            best_plen = plen
+            result = (asn, name, asn_type)
+
+    _asn_cache[key] = result
+    return result
 
 
 def load_fcc_providers():
-    """Load ISPs serving each school's area (from fcc_get_providers.py)."""
     providers = {}
     try:
         with open(PROVIDERS_FILE, newline="", encoding="utf-8") as f:
@@ -67,27 +112,6 @@ def load_fcc_providers():
     return providers
 
 
-def whois_lookup(ip):
-    """Returns (asn, org_name). Cached by /24."""
-    try:
-        prefix = str(ipaddress.IPv4Network(f"{ip}/24", strict=False).network_address)
-    except ValueError:
-        prefix = ip
-
-    if prefix in whois_cache:
-        return whois_cache[prefix]
-
-    try:
-        result   = IPWhois(ip).lookup_rdap(depth=1)
-        asn      = result.get("asn", "") or ""
-        org_name = result.get("asn_description", "") or ""
-    except Exception:
-        asn, org_name = "", ""
-
-    whois_cache[prefix] = (asn, org_name)
-    return asn, org_name
-
-
 def _tokenize_name(name):
     if not name:
         return []
@@ -96,12 +120,7 @@ def _tokenize_name(name):
 
 
 def build_brand_extractor(corpus):
-    """
-    Build a TF-IDF brand keyword extractor from a corpus of provider/org names.
-    Returns a function: name -> set of brand keywords (normalized IDF >= 0.7,
-    or top-1 fallback).
-    """
-    docs = [_tokenize_name(n) for n in corpus if n]
+    docs   = [_tokenize_name(n) for n in corpus if n]
     n_docs = max(len(docs), 1)
 
     doc_freq = Counter()
@@ -127,52 +146,46 @@ def build_brand_extractor(corpus):
 
 
 def org_matches_provider(org_name, allowed_providers, brand_extractor):
-    """True if org name shares a brand keyword with any allowed provider."""
     if not org_name or not allowed_providers:
         return False
     org_brands = brand_extractor(org_name)
     if not org_brands:
         return False
-    for provider in allowed_providers:
-        if org_brands & brand_extractor(provider):
-            return True
-    return False
+    return any(org_brands & brand_extractor(p) for p in allowed_providers)
 
 
-def score_ip(hostname, asn, org_name, school_name, edu_asns, fcc_providers, brand_extractor):
+def score_ip(hostname, asn, org_name, asn_type, school_name, fcc_providers, brand_extractor,
+             strong_dns_match=False):
     """Returns (score, confidence, is_hosting, whois_match, fcc_match)."""
-    h = hostname.lower()
+    h         = hostname.lower()
     org_lower = org_name.lower()
 
-    is_hosting = any(p in org_lower for p in HOSTING_PROVIDERS)
+    is_hosting = (asn_type == "hosting") and not any(
+        kw in org_name.lower() for kw in _BACKBONE_OVERRIDE
+    )
 
-    # Signal 1: phase 2 already filtered, so dns match is implicit
-    dns_match = True
+    dns_match = True  # phase 2 already filtered for this
 
-    # Signal 2: .k12.ny.us hostname. Other states get rejected outright.
+    # Belt-and-suspenders: reject other-state k12 zones that slipped through phase 2
     state_match = re.search(r'\.k12\.([a-z]{2})\.us', h)
     if state_match and state_match.group(1) != 'ny':
         return 0, "low", is_hosting, False, False
-    ny_k12_domain = bool(state_match and state_match.group(1) == 'ny')
 
-    # Signal 3: educational ASN or known local ISP
     if is_hosting:
         whois_match = False
     else:
-        is_edu_asn   = str(asn) in edu_asns
+        is_edu_asn   = (asn_type == "education")
         allowed_isps = fcc_providers.get(school_name, [])
         whois_match  = is_edu_asn or org_matches_provider(org_name, allowed_isps, brand_extractor)
 
-    # Signal 4: ISP specifically in FCC data for this school's area
     if is_hosting or not fcc_providers.get(school_name):
         fcc_match = False
     else:
         fcc_match = org_matches_provider(org_name, fcc_providers[school_name], brand_extractor)
 
-    score = sum([dns_match, ny_k12_domain, whois_match, fcc_match])
+    score = sum([dns_match, strong_dns_match, whois_match, fcc_match])
 
-    # *.k12.ny.us is state-managed; lower the threshold when confirmed
-    if ny_k12_domain:
+    if strong_dns_match:
         label = "high" if score >= 2 else "medium"
     else:
         label = "high" if score >= 3 else "medium" if score >= 2 else "low"
@@ -185,11 +198,9 @@ def run(input_file=INPUT_FILE, output_file=OUTPUT_FILE):
     with open(input_file, newline="", encoding="utf-8") as f:
         rows = list(csv.DictReader(f))
 
-    edu_asns      = load_edu_asns()
+    load_ipinfo_asn(IPINFO_ASN_FILE)
     fcc_providers = load_fcc_providers()
 
-    # Build TF-IDF brand extractor. Include previous WHOIS orgs from any
-    # existing output to enrich the corpus.
     corpus = []
     for plist in fcc_providers.values():
         corpus.extend(plist)
@@ -211,33 +222,38 @@ def run(input_file=INPUT_FILE, output_file=OUTPUT_FILE):
         ip     = row["ip_address"].strip()
         school = row["school_name"].strip()
 
-        asn, org_name = whois_lookup(ip)
-        hostname = row.get("hostname", "")
+        asn, org_name, asn_type = lookup_ip_asn(ip)
+        hostname                = row.get("hostname", "")
+        strong_dns_match        = (row["match_type"] == "match")
+        ny_k12                  = bool(re.search(r'\.k12\.ny\.us', hostname.lower()))
+
         score, confidence, is_hosting, whois_match, fcc_match = score_ip(
-            hostname, asn, org_name, school, edu_asns, fcc_providers, brand_extractor
+            hostname, asn, org_name, asn_type, school, fcc_providers, brand_extractor,
+            strong_dns_match=strong_dns_match,
         )
-        ny_k12 = bool(re.search(r'\.k12\.ny\.us', hostname.lower()))
 
         results.append({
-            "ip_address":   ip,
-            "school_name":  school,
-            "hostname":     hostname,
-            "phase2_match": row["match_type"],
-            "asn":          asn,
-            "whois_org":    org_name,
-            "is_hosting":   "yes" if is_hosting else "no",
-            "ny_k12_domain":"yes" if ny_k12 else "no",
-            "whois_match":  "yes" if whois_match else "no",
-            "fcc_match":    "yes" if fcc_match else "no",
-            "score":        score,
-            "confidence":   confidence,
+            "ip_address":       ip,
+            "school_name":      school,
+            "hostname":         hostname,
+            "phase2_match":     row["match_type"],
+            "asn":              asn,
+            "whois_org":        org_name,
+            "is_hosting":       "yes" if is_hosting else "no",
+            "strong_dns_match": "yes" if strong_dns_match else "no",
+            "ny_k12_domain":    "yes" if ny_k12 else "no",
+            "whois_match":      "yes" if whois_match else "no",
+            "fcc_match":        "yes" if fcc_match else "no",
+            "score":            score,
+            "confidence":       confidence,
+            "distance_km":      row.get("distance_km", ""),
         })
 
         print(f"{i}/{len(candidates)}  {ip:<18}  {org_name[:30]:<30}  "
               f"fcc={'yes' if fcc_match else 'no'}  score={score}  [{confidence}]")
 
     # Dedup by ip_address: same IP can match multiple nearby schools.
-    # Keep highest score; break ties preferring ny_k12_domain.
+    # Keep highest score; break ties preferring strong_dns_match.
     ip_best = {}
     for r in results:
         ip = r["ip_address"]
@@ -247,7 +263,7 @@ def run(input_file=INPUT_FILE, output_file=OUTPUT_FILE):
             prev = ip_best[ip]
             if (r["score"] > prev["score"] or
                     (r["score"] == prev["score"] and
-                     r["ny_k12_domain"] == "yes" and prev["ny_k12_domain"] != "yes")):
+                     r["strong_dns_match"] == "yes" and prev["strong_dns_match"] != "yes")):
                 ip_best[ip] = r
     dedup_count = len(results) - len(ip_best)
     if dedup_count:
@@ -258,8 +274,8 @@ def run(input_file=INPUT_FILE, output_file=OUTPUT_FILE):
 
     fieldnames = [
         "ip_address", "school_name", "hostname", "phase2_match",
-        "asn", "whois_org", "is_hosting", "ny_k12_domain", "whois_match", "fcc_match",
-        "score", "confidence",
+        "asn", "whois_org", "is_hosting", "strong_dns_match", "ny_k12_domain",
+        "whois_match", "fcc_match", "score", "confidence", "distance_km",
     ]
     with open(output_file, "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames)
