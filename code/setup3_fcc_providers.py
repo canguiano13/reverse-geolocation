@@ -1,12 +1,4 @@
-"""
-FCC provider lookup.
-
-For each school's census block, find which ISPs offer broadband service there.
-Uses FCC broadband deployment data (download for NY from broadbandmap.fcc.gov).
-
-Input:  data/inputs/school_blocks.csv  (from setup2_fcc_blocks.py)
-Output: data/inputs/school_providers.csv
-"""
+"""FCC provider lookup - find ISPs serving each school's census tract."""
 
 import csv
 import pandas as pd

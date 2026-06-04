@@ -1,12 +1,4 @@
-"""
-FCC census block lookup.
-
-For each school's GPS coordinates, ask the FCC API which census block it falls in.
-That block ID is used by setup3_fcc_providers.py to find ISPs serving the area.
-
-Input:  data/inputs/schools_selected.csv
-Output: data/inputs/school_blocks.csv
-"""
+"""FCC census block lookup - resolve each school's GPS coordinates to a census block FIPS code."""
 
 import csv
 import requests
@@ -16,11 +8,10 @@ OUTPUT_FILE = "data/inputs/school_blocks.csv"
 
 
 def get_census_block(lat, lon):
-    """FCC census block FIPS code for a coordinate, or None."""
     try:
-        url      = f"https://geo.fcc.gov/api/census/block/find?latitude={lat}&longitude={lon}&format=json"
-        response = requests.get(url, timeout=5).json()
-        return response["Block"]["FIPS"]
+        url  = f"https://geo.fcc.gov/api/census/block/find?latitude={lat}&longitude={lon}&format=json"
+        resp = requests.get(url, timeout=5).json()
+        return resp["Block"]["FIPS"]
     except Exception:
         return None
 
