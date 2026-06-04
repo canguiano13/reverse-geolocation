@@ -1,9 +1,4 @@
-"""
-Filter impact statistics.
-
-Per-radius table of how many /24 prefixes, IPs, and schools survive each
-pipeline stage. Mirrors Table 4 from the original paper.
-"""
+"""Per-radius table of how many /24 prefixes, IPs, and schools survive each pipeline stage."""
 
 import csv
 import ipaddress
@@ -37,7 +32,6 @@ def count_csv_rows(path):
 
 
 def count_unique_24s_from_ips(path, col="ip_address"):
-    """Unique /24 prefixes from an IP column."""
     if not os.path.exists(path):
         return 0
     seen = set()
@@ -50,7 +44,7 @@ def count_unique_24s_from_ips(path, col="ip_address"):
 
 
 def count_unique_24s_from_cidrs(path, col="cidr"):
-    """Unique /24 prefixes from a CIDR column. Expands wider CIDRs into /24s."""
+    """Expands wider CIDRs into component /24s."""
     if not os.path.exists(path):
         return 0
     seen = set()
@@ -78,7 +72,7 @@ def count_high_confidence(path):
     """Returns (high-confidence IP count, distinct school count)."""
     if not os.path.exists(path):
         return 0, 0
-    ips = 0
+    ips     = 0
     schools = set()
     with open(path, newline="", encoding="utf-8") as f:
         for row in csv.DictReader(f):
@@ -96,8 +90,8 @@ def stats_for_radius(r):
     p_phase3        = f"{OUTPUT_DIR}/phase3_confirmed_{r}km.csv"
     p_phase3_reattr = f"{OUTPUT_DIR}/phase3_reattributed_{r}km.csv"
 
-    p3_high_ips, p3_high_schools  = count_high_confidence(p_phase3)
-    _,           p3r_high_districts = count_high_confidence(p_phase3_reattr)
+    p3_high_ips, p3_high_schools     = count_high_confidence(p_phase3)
+    _,           p3r_high_districts  = count_high_confidence(p_phase3_reattr)
 
     return {
         "radius_km":                   r,
@@ -124,7 +118,7 @@ def run():
         with open(verification_path, newline="", encoding="utf-8") as f:
             for row in csv.DictReader(f):
                 v = row.get("verdict", "").strip()
-                if v == "TRUE_POSITIVE":  tp += 1
+                if v == "TRUE_POSITIVE":    tp += 1
                 elif v == "FALSE_POSITIVE": fp += 1
                 elif v == "MANUAL_CHECK":   mc += 1
 

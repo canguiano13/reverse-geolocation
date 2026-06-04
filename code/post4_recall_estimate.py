@@ -8,17 +8,16 @@ from collections import defaultdict
 import dns.resolver
 import dns.reversename
 
-PHASE0_FILE = "data/outputs/phase0_arin.csv"
+PHASE0_FILE   = "data/outputs/phase0_arin.csv"
 COMBINED_FILE = "data/outputs/combined_results_10km.csv"
-OUTPUT_FILE = "data/outputs/recall_estimate.csv"
-N_PROBE = 50
-MAX_WORKERS = 30
-TIMEOUT = 3.0
+OUTPUT_FILE   = "data/outputs/recall_estimate.csv"
+N_PROBE       = 50
+MAX_WORKERS   = 30
+TIMEOUT       = 3.0
 
 socket.setdefaulttimeout(TIMEOUT)
 
-# macOS mDNSResponder throttles under sustained PTR load; query public
-# resolvers directly.
+# macOS mDNSResponder throttles under sustained PTR load; query public resolvers directly.
 _resolver = dns.resolver.Resolver(configure=False)
 _resolver.nameservers = ["8.8.8.8", "8.8.4.4", "1.1.1.1"]
 _resolver.timeout = 1.5
@@ -42,7 +41,7 @@ def probe_block(cidr):
     if not hosts:
         return []
     step = max(1, len(hosts) // N_PROBE)
-    ips = [str(h) for h in hosts[::step][:N_PROBE]]
+    ips  = [str(h) for h in hosts[::step][:N_PROBE]]
 
     found = []
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as ex:
@@ -81,7 +80,7 @@ def run(phase0_file=PHASE0_FILE, combined_file=COMBINED_FILE, output_file=OUTPUT
         sample = found[0][1] if found else ""
 
         status = "HAS k12.ny.us PTR" if found else "no PTR records"
-        note = " (also Tier 1, expected)" if also_t1 else ""
+        note   = " (also Tier 1, expected)" if also_t1 else ""
         print(f"  {district}")
         print(f"    {status}{note}")
         print(f"    blocks: {', '.join(cidrs)}")
@@ -89,12 +88,12 @@ def run(phase0_file=PHASE0_FILE, combined_file=COMBINED_FILE, output_file=OUTPUT
             print(f"    sample: {sample}")
 
         rows.append({
-            "district": district,
-            "cidrs": " | ".join(cidrs),
-            "also_tier1": "yes" if also_t1 else "no",
+            "district":      district,
+            "cidrs":         " | ".join(cidrs),
+            "also_tier1":    "yes" if also_t1 else "no",
             "k12_ptr_found": "yes" if found else "no",
             "k12_ptr_count": len(found),
-            "sample_ptr": sample,
+            "sample_ptr":    sample,
         })
 
     fields = ["district", "cidrs", "also_tier1", "k12_ptr_found",
@@ -105,9 +104,9 @@ def run(phase0_file=PHASE0_FILE, combined_file=COMBINED_FILE, output_file=OUTPUT
         w.writerows(rows)
 
     has_ptr = [r for r in rows if r["k12_ptr_found"] == "yes"]
-    no_ptr = [r for r in rows if r["k12_ptr_found"] == "no"]
+    no_ptr  = [r for r in rows if r["k12_ptr_found"] == "no"]
     t2_with = [r for r in has_ptr if r["also_tier1"] == "no"]
-    t2_only = [r for r in no_ptr if r["also_tier1"] == "no"]
+    t2_only = [r for r in no_ptr  if r["also_tier1"] == "no"]
 
     print(f"\n{'=' * 60}")
     print(f"  RECALL ESTIMATE SUMMARY")

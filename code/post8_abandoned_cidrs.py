@@ -4,21 +4,21 @@ import csv
 import ipaddress
 import os
 
-RADII = [5, 10, 20, 30]
+RADII     = [5, 10, 20, 30]
 MAX_CIDRS = 500
 
 
 def run():
     for r in RADII:
         cand_path = f"data/outputs/phase_candidates_{r}km.csv"
-        p2_path = f"data/outputs/phase2_filtered_{r}km.csv"
-        out_path = f"data/outputs/abandoned_cidrs_{r}km.csv"
+        p2_path   = f"data/outputs/phase2_filtered_{r}km.csv"
+        out_path  = f"data/outputs/abandoned_cidrs_{r}km.csv"
 
         if not (os.path.exists(cand_path) and os.path.exists(p2_path)):
             print(f"{r}km: missing inputs, skipping")
             continue
 
-        block_count = {}
+        block_count  = {}
         school_cidrs = {}
         with open(cand_path, newline="", encoding="utf-8") as f:
             for row in csv.DictReader(f):
@@ -38,7 +38,7 @@ def run():
                 except ValueError:
                     pass
 
-        abandoned = [(c, s) for s in eligible for c in school_cidrs[s] if c not in resolved]
+        abandoned = sorted((c, s) for s in eligible for c in school_cidrs[s] if c not in resolved)
 
         with open(out_path, "w", newline="", encoding="utf-8") as f:
             w = csv.writer(f)

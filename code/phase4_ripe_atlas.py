@@ -1,13 +1,8 @@
-"""
-Phase 4: RIPE Atlas validation via Speed-of-Internet (SoI) constraint.
+"""Phase 4: RIPE Atlas validation via Speed-of-Internet (SoI) constraint.
 
-For each high-confidence IP, ping it from two probe sets:
-  near : probes within 40 km of the school
-  far  : probes 100+ km away
-
-If a far probe's RTT implies the IP must be within X km of itself, but the
-school is farther than X km from that probe, the IP cannot be at the school.
-SoI constant: 4/9 * c ~= 133.2 km/ms, plus a 50 km slack buffer.
+Pings each high-confidence IP from near probes (<40km) and far probes (>100km).
+If RTT from a far probe implies the IP is physically closer to that probe than
+to the school, it's flagged invalid. SoI constant: 4/9 * c ~= 133.2 km/ms.
 """
 
 import csv
@@ -24,13 +19,12 @@ OUTPUT_FILE  = "data/outputs/phase4_validated.csv"
 ATLAS_API = "https://atlas.ripe.net/api/v2"
 HEADERS   = {"Authorization": f"Key {API_KEY}", "Content-Type": "application/json"}
 
-SOI_KM_PER_MS = (4 / 9) * (299792.458 / 1000)  # ~133.2 km/ms
-SOI_BUFFER_KM = 50
-NEAR_KM       = 40
-FAR_KM        = 100
-
-VALIDATE           = {"high"}   # ~30 credits per IP
-MAX_IPS_PER_SCHOOL = 20         # cap per school: enough for representative validation
+SOI_KM_PER_MS      = (4 / 9) * (299792.458 / 1000)  # ~133.2 km/ms
+SOI_BUFFER_KM      = 50
+NEAR_KM            = 40
+FAR_KM             = 100
+VALIDATE           = {"high"}
+MAX_IPS_PER_SCHOOL = 20
 
 
 def distance_km(lat1, lon1, lat2, lon2):
@@ -139,11 +133,9 @@ def is_soi_violation(far_rtt_ms, school_lat, school_lon, far_probe):
     coords = far_probe.get("geometry", {}).get("coordinates", [])
     if len(coords) != 2 or far_rtt_ms is None:
         return False
-
     fp_lat, fp_lon      = coords[1], coords[0]
     far_to_school_km    = distance_km(school_lat, school_lon, fp_lat, fp_lon)
     soi_max_distance_km = SOI_KM_PER_MS * far_rtt_ms + SOI_BUFFER_KM
-
     return soi_max_distance_km < far_to_school_km
 
 
@@ -162,7 +154,7 @@ def run(input_file=INPUT_FILE, schools_file=SCHOOLS_FILE, output_file=OUTPUT_FIL
     to_validate_all = [r for r in all_rows if r["confidence"] in VALIDATE]
     skip_rows       = [r for r in all_rows if r["confidence"] not in VALIDATE]
 
-    # Cap per school. Prioritise ny_k12_domain IPs, then by score.
+    # Cap per school. Prioritize strong_dns_match, then ny_k12_domain, then score.
     per_school = defaultdict(list)
     for r in to_validate_all:
         per_school[r["school_name"]].append(r)
@@ -171,7 +163,8 @@ def run(input_file=INPUT_FILE, schools_file=SCHOOLS_FILE, output_file=OUTPUT_FIL
     capped_rows = []
     for school, ips in per_school.items():
         ips_sorted = sorted(ips,
-                            key=lambda r: (-int(r.get("ny_k12_domain") == "yes"),
+                            key=lambda r: (-int(r.get("strong_dns_match") == "yes"),
+                                          -int(r.get("ny_k12_domain") == "yes"),
                                           -int(r.get("score", 0))))
         to_validate.extend(ips_sorted[:MAX_IPS_PER_SCHOOL])
         capped_rows.extend(ips_sorted[MAX_IPS_PER_SCHOOL:])

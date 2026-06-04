@@ -1,7 +1,4 @@
-"""
-For each school in the sample, count active RIPE Atlas probes within 40 km.
-Used in the paper to show validation coverage.
-"""
+"""Count active RIPE Atlas probes within 40km of each school."""
 
 import csv
 import time

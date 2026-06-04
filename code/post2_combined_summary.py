@@ -1,21 +1,10 @@
-"""
-Two-tier results summary.
-
-Tier 1 (RIG): districts found via geolocation + reverse DNS. PTR records in
-*.k12.ny.us prove the IP is actively used by a NY school district.
-
-Tier 2 (ARIN): districts with IP blocks registered in ARIN WHOIS. Proves
-ownership, not active use. Complements RIG when reverse DNS isn't configured.
-
-Output: data/outputs/combined_results.csv
-"""
+"""Two-tier results summary combining RIG (Tier 1) and ARIN (Tier 2) districts."""
 
 import csv
 import re
 import ipaddress
 from collections import defaultdict
 
-# Generic words that can't distinguish districts when checking name overlap
 OVERLAP_STOP = {
     "school", "schools", "district", "central", "union", "free",
     "high", "middle", "elementary", "public", "city", "county",
@@ -47,7 +36,6 @@ def block_size(cidr):
 def run(phase0_file=PHASE0_FILE, phase3_file=PHASE3_FILE,
         phase4_file=PHASE4_FILE, output_file=OUTPUT_FILE):
 
-    # Tier 1: RIG-confirmed
     with open(phase3_file, newline="", encoding="utf-8") as f:
         rig_rows = list(csv.DictReader(f))
 
@@ -63,7 +51,6 @@ def run(phase0_file=PHASE0_FILE, phase3_file=PHASE3_FILE,
     for r in rig_rows:
         rig_by_district[r["school_name"]].append(r)
 
-    # Tier 2: ARIN ownership
     with open(phase0_file, newline="", encoding="utf-8") as f:
         arin_rows = list(csv.DictReader(f))
 
@@ -83,22 +70,19 @@ def run(phase0_file=PHASE0_FILE, phase3_file=PHASE3_FILE,
         total  = len(ips)
         ny_k12 = sum(1 for r in ips if r.get("ny_k12_domain") == "yes")
 
-        # Skip false positives that have no k12.ny.us hit and no high-confidence IPs
         if ny_k12 == 0 and high == 0:
             continue
 
         ripe_yes  = sum(1 for r in ips if p4_status.get(r["ip_address"]) == "yes")
         ripe_skip = sum(1 for r in ips if p4_status.get(r["ip_address"]) == "skipped")
 
-        # ARIN overlap: word-boundary match on content words only
         cw = content_words(district)
         arin_overlap = bool(cw) and any(
             any(re.search(r'\b' + re.escape(w) + r'\b', arin_d.lower()) for w in cw)
             for arin_d in arin_by_district
         )
 
-        sample = next((r["hostname"] for r in ips if r.get("ny_k12_domain") == "yes"), "")
-
+        sample        = next((r["hostname"] for r in ips if r.get("ny_k12_domain") == "yes"), "")
         district_type = next(
             (r.get("district_type", "public") for r in ips if r.get("district_type")),
             "public"

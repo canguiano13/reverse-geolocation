@@ -9,9 +9,6 @@ from collections import defaultdict
 RADII = [5, 10, 20]
 OUTPUT_FILE = "data/outputs/recall_vs_arin.csv"
 
-# Drop generic structural tokens so ARIN names like
-# "Monroe-Woodbury Central School District" match gigamaps names like
-# "Monroe Woodbury Middle School" on the distinguishing tokens.
 GENERIC = {"school", "schools", "district", "central", "union", "free",
            "city", "of", "the", "and", "csd", "ufsd", "boces", "middle",
            "high", "elementary", "senior", "junior", "academy",
@@ -52,11 +49,11 @@ def load_tier1(r):
 
 
 def run():
-    arin = load_arin()
+    arin   = load_arin()
     n_arin = len(arin)
     print(f"ARIN (Tier 2) districts: {n_arin}")
 
-    rows = []
+    rows    = []
     summary = {}
 
     for r in RADII:
@@ -65,8 +62,8 @@ def run():
             print(f"  {r}km: phase3_reattributed missing, skipping")
             continue
 
-        matched = 0
-        rig_in_arin = 0
+        matched           = 0
+        rig_in_arin       = 0
         arin_matched_size = 0
 
         for arin_name, nets in sorted(arin.items()):
@@ -75,8 +72,8 @@ def run():
 
             if t1:
                 matched += 1
-                rig_ips = tier1[t1]
-                covered = 0
+                rig_ips  = tier1[t1]
+                covered  = 0
                 for ip in rig_ips:
                     try:
                         addr = ipaddress.IPv4Address(ip)
@@ -84,56 +81,56 @@ def run():
                         continue
                     if any(addr in n for n in nets):
                         covered += 1
-                rig_in_arin += covered
+                rig_in_arin       += covered
                 arin_matched_size += arin_size
                 pct = (covered / arin_size * 100) if arin_size else 0
                 rows.append({
-                    "radius_km": r,
-                    "arin_district": arin_name,
-                    "arin_block_count": len(nets),
-                    "arin_total_ips": arin_size,
-                    "status": "BOTH",
-                    "tier1_district": t1,
-                    "tier1_ip_count": len(rig_ips),
-                    "tier1_ips_inside_arin": covered,
+                    "radius_km":              r,
+                    "arin_district":          arin_name,
+                    "arin_block_count":       len(nets),
+                    "arin_total_ips":         arin_size,
+                    "status":                 "BOTH",
+                    "tier1_district":         t1,
+                    "tier1_ip_count":         len(rig_ips),
+                    "tier1_ips_inside_arin":  covered,
                     "tier1_ips_outside_arin": len(rig_ips) - covered,
-                    "ip_coverage_pct": round(pct, 2),
+                    "ip_coverage_pct":        round(pct, 2),
                 })
             else:
                 rows.append({
-                    "radius_km": r,
-                    "arin_district": arin_name,
-                    "arin_block_count": len(nets),
-                    "arin_total_ips": arin_size,
-                    "status": "ARIN_ONLY",
-                    "tier1_district": "",
-                    "tier1_ip_count": 0,
-                    "tier1_ips_inside_arin": 0,
+                    "radius_km":              r,
+                    "arin_district":          arin_name,
+                    "arin_block_count":       len(nets),
+                    "arin_total_ips":         arin_size,
+                    "status":                 "ARIN_ONLY",
+                    "tier1_district":         "",
+                    "tier1_ip_count":         0,
+                    "tier1_ips_inside_arin":  0,
                     "tier1_ips_outside_arin": 0,
-                    "ip_coverage_pct": 0.0,
+                    "ip_coverage_pct":        0.0,
                 })
 
         for t1 in tier1:
             if not any(name_match(a, t1) for a in arin):
                 rows.append({
-                    "radius_km": r,
-                    "arin_district": "",
-                    "arin_block_count": 0,
-                    "arin_total_ips": 0,
-                    "status": "TIER1_ONLY",
-                    "tier1_district": t1,
-                    "tier1_ip_count": len(tier1[t1]),
-                    "tier1_ips_inside_arin": 0,
+                    "radius_km":              r,
+                    "arin_district":          "",
+                    "arin_block_count":       0,
+                    "arin_total_ips":         0,
+                    "status":                 "TIER1_ONLY",
+                    "tier1_district":         t1,
+                    "tier1_ip_count":         len(tier1[t1]),
+                    "tier1_ips_inside_arin":  0,
                     "tier1_ips_outside_arin": len(tier1[t1]),
-                    "ip_coverage_pct": 0.0,
+                    "ip_coverage_pct":        0.0,
                 })
 
         summary[r] = {
-            "matched": matched,
-            "n_arin": n_arin,
-            "recall_pct": (matched / n_arin * 100) if n_arin else 0,
-            "ip_coverage_pct": (rig_in_arin / arin_matched_size * 100) if arin_matched_size else 0,
-            "rig_ips_in_arin": rig_in_arin,
+            "matched":          matched,
+            "n_arin":           n_arin,
+            "recall_pct":       (matched / n_arin * 100) if n_arin else 0,
+            "ip_coverage_pct":  (rig_in_arin / arin_matched_size * 100) if arin_matched_size else 0,
+            "rig_ips_in_arin":  rig_in_arin,
             "arin_size_matched": arin_matched_size,
         }
 
@@ -161,7 +158,7 @@ def run():
 
     if summary:
         med = sorted(summary)[len(summary) // 2]
-        s = summary[med]
+        s   = summary[med]
         print(f"\nPAPER NUMBER (median radius={med}km):")
         print(f"  District-level recall:  {s['matched']}/{s['n_arin']} = {s['recall_pct']:.1f}%")
         print(f"  IP-level coverage of matched districts: {s['ip_coverage_pct']:.1f}%")

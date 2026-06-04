@@ -1,16 +1,4 @@
-"""
-Phase 3b: re-attribute Phase 3 results to the correct district.
-
-Phase 1 assigns each IP block to the first school that geographically claims it,
-which is often wrong. The PTR hostname (e.g. tech.scarsdaleschools.k12.ny.us)
-tells us the real owner. This script:
-  1. Extracts the district code from each *.k12.ny.us hostname
-  2. Matches it to the best school name in the gigamaps NY list
-  3. Writes a corrected CSV with both original and attributed school names
-
-Input:  data/outputs/phase3_confirmed_10km.csv
-Output: data/outputs/phase3_reattributed_10km.csv
-"""
+"""Phase 3b: re-attribute Phase 3 results to the correct district via PTR hostname."""
 
 import csv
 import re
@@ -20,8 +8,7 @@ INPUT_FILE   = "data/outputs/phase3_confirmed_10km.csv"
 SCHOOLS_FILE = "data/inputs/gigamaps_schools_ny.csv"
 OUTPUT_FILE  = "data/outputs/phase3_reattributed_10km.csv"
 
-# District code (subdomain before .k12.ny.us) -> search term for school list.
-# Compound codes can't be auto-split, so they're mapped explicitly.
+# Compound district codes that can't be auto-split are mapped explicitly.
 MANUAL_MAPPINGS = {
     "mw":               "Monroe-Woodbury",
     "cpcs":             "Chateaugay",
@@ -33,47 +20,41 @@ MANUAL_MAPPINGS = {
     "hackley":          "Hackley",
     "halfhollowhills":  "Half Hollow Hills High School",
     "hhh":              "Half Hollow Hills High School",
-    "northshore":       "Sea Cliff School",                # unique anchor for North Shore CSD
+    "northshore":       "Sea Cliff School",
     "westhempstead":    "West Hempstead High School",
     "pob":              "Plainview-Old Bethpage",
     "smithtown":        "Smithtown High School",
     "greatneck":        "Great Neck South Middle School",
-    "lmcs":             "Livingston Manor Central School", # Sullivan County, via Ulster BOCES
+    "lmcs":             "Livingston Manor Central School",
 }
 
-# Non-standard cases. Anything not listed defaults to "public".
 DISTRICT_FLAGS = {
-    "hackley": "private",       # private prep school, Tarrytown NY
-    "lmcs":    "out_of_metro",  # Sullivan County, geolocated here via shared BOCES infra
+    "hackley": "private",
+    "lmcs":    "out_of_metro",
 }
 
-# When the search anchor is an obscure school, show a recognisable name in the output
 DISPLAY_NAMES = {
     "Sea Cliff School": "North Shore High School",
 }
 
 
 def extract_district_code(hostname):
-    """Pull the subdomain before .k12.ny.us, e.g. 'scarsdaleschools'."""
     m = re.search(r'([^.]+)\.k12\.ny\.us', hostname.lower())
     return m.group(1) if m else None
 
 
 def find_best_match(code, school_names):
-    """Best school name match for a district code. First all-token match, else best partial."""
     search_term = MANUAL_MAPPINGS.get(code, code)
     tokens = [t.lower() for t in re.split(r'[\s\-]+', search_term) if len(t) >= 3]
 
     for name in school_names:
-        nl = name.lower()
-        if all(t in nl for t in tokens):
+        if all(t in name.lower() for t in tokens):
             return name
 
     best_name  = None
     best_score = 0
     for name in school_names:
-        nl    = name.lower()
-        score = sum(1 for t in tokens if t in nl)
+        score = sum(1 for t in tokens if t in name.lower())
         if score > best_score:
             best_score = score
             best_name  = name
@@ -128,8 +109,8 @@ def run(input_file=INPUT_FILE, schools_file=SCHOOLS_FILE, output_file=OUTPUT_FIL
 
     out_fieldnames = ["ip_address", "school_name", "geo_school", "district_code",
                       "district_type", "hostname", "phase2_match", "asn", "whois_org",
-                      "is_hosting", "ny_k12_domain", "whois_match", "fcc_match",
-                      "score", "confidence"]
+                      "is_hosting", "strong_dns_match", "ny_k12_domain", "whois_match", "fcc_match",
+                      "score", "confidence", "distance_km"]
 
     with open(output_file, "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=out_fieldnames, extrasaction="ignore")

@@ -1,19 +1,10 @@
-"""
-Verify high-confidence IPs against ARIN RDAP.
+"""Verify high-confidence IPs against ARIN RDAP.
 
-For every high-confidence IP from phase 3, look up the actual owner in ARIN
-and classify as TRUE_POSITIVE, FALSE_POSITIVE, or MANUAL_CHECK.
-
-Verdict logic (in order):
-  1. Hostname is in *.k12.ny.us  → TRUE_POSITIVE  (NY State-managed DNS zone)
-  2. Hostname is in *.k12.XX.us where XX != ny → FALSE_POSITIVE (different state)
-  3. ARIN org name contains school/education keyword AND a NY indicator → TRUE_POSITIVE
-  4. Anything else → MANUAL_CHECK (requires human review)
-
-Note: all current high-confidence IPs pass rule 1, so precision is driven entirely
-by the .k12.ny.us signal rather than ARIN org name matching.
-
-Output: verification_results.csv
+Verdict logic:
+  1. Hostname in *.k12.ny.us           -> TRUE_POSITIVE
+  2. Hostname in *.k12.XX.us (XX!=ny)  -> FALSE_POSITIVE
+  3. ARIN org contains edu keyword + NY indicator -> TRUE_POSITIVE
+  4. Otherwise                         -> MANUAL_CHECK
 """
 
 import csv
@@ -24,8 +15,8 @@ import requests
 OUTPUT_FILE = "data/outputs/verification_results.csv"
 ARIN_URL    = "https://rdap.arin.net/registry/ip/{}"
 
-NY_INDICATORS  = {"ny", "new york", "newyork"}
-EDU_KEYWORDS   = {"school", "k12", "district", "education", "academy", "boces", "ufsd"}
+NY_INDICATORS = {"ny", "new york", "newyork"}
+EDU_KEYWORDS  = {"school", "k12", "district", "education", "academy", "boces", "ufsd"}
 
 
 def arin_lookup(ip):
@@ -35,7 +26,7 @@ def arin_lookup(ip):
         if r.status_code != 200:
             return "", ""
         data = r.json()
-        org = ""
+        org  = ""
         for entity in data.get("entities", []):
             if "registrant" in entity.get("roles", []) or "administrative" in entity.get("roles", []):
                 for entry in entity.get("vcardArray", [None, []])[1]:
@@ -53,26 +44,17 @@ def arin_lookup(ip):
 
 
 def classify(hostname, org):
-    """
-    Returns (verdict, reason).
-
-    TRUE_POSITIVE  — confirmed as a NY K-12 school IP
-    FALSE_POSITIVE — confirmed as NOT a NY K-12 school IP
-    MANUAL_CHECK   — cannot be automatically determined
-    """
+    """Returns (verdict, reason)."""
     h = hostname.lower()
     o = org.lower()
 
-    # Rule 1: NY State-managed DNS zone — definitive proof
     if re.search(r'\.k12\.ny\.us', h):
         return "TRUE_POSITIVE", "hostname is .k12.ny.us"
 
-    # Rule 2: Another state's K-12 zone — definitive rejection
     state = re.search(r'\.k12\.([a-z]{2})\.us', h)
     if state and state.group(1) != "ny":
         return "FALSE_POSITIVE", f"hostname is .k12.{state.group(1)}.us (different state)"
 
-    # Rule 3: ARIN org name contains education keyword + NY indicator
     if any(kw in o for kw in EDU_KEYWORDS) and any(ny in o for ny in NY_INDICATORS):
         return "TRUE_POSITIVE", f"ARIN org is a NY school: {org}"
 
@@ -88,7 +70,7 @@ def run(files=None, output_file=OUTPUT_FILE):
             "30km": "data/outputs/phase3_confirmed_30km.csv",
         }
 
-    # Deduplicate across radii — same IP+hostname only verified once
+    # Deduplicate across radii - same IP+hostname only verified once
     seen      = {}
     run_label = {}
     for run_name, filepath in files.items():
@@ -138,7 +120,8 @@ def run(files=None, output_file=OUTPUT_FILE):
 
     with open(output_file, "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(
-            f, fieldnames=["run", "ip_address", "matched_school", "hostname", "arin_org", "verdict", "reason"]
+            f, fieldnames=["run", "ip_address", "matched_school", "hostname",
+                           "arin_org", "verdict", "reason"]
         )
         writer.writeheader()
         writer.writerows(results)
