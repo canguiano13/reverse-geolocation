@@ -1,9 +1,4 @@
-"""
-Phase 0: ARIN WHOIS discovery.
-
-Search ARIN for orgs with school-related names and pull their registered IP blocks.
-Output: phase0_arin.csv  (cidr, school_name, org_handle)
-"""
+"""Phase 0: ARIN WHOIS discovery - search for NY school orgs and pull their IP blocks."""
 
 import csv
 import ipaddress
