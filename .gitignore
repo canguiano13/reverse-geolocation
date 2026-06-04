@@ -1,5 +1,6 @@
 # Large data files thats too big for GitHub, download separately
 code/data/inputs/ipinfo/
+code/data/inputs/isi/internet_address_verfploeter_hitlist_it115w-20260213.fsdb.bz2
 code/data/inputs/GeoLite2-City.mmdb
 code/data/inputs/bdc_36_Cable_fixed_broadband_D25_04may2026.csv
 code/data/inputs/bdc_36_FibertothePremises_fixed_broadband_D25_04may2026.csv
@@ -235,5 +236,6 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
 
 code/README.md

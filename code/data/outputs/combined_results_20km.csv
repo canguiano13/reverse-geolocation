@@ -1,5 +1,10 @@
 tier,district,district_type,method,total_ips,high_confidence,ny_k12_confirmed,ripe_validated,ripe_skipped,also_in_arin,arin_blocks,arin_block_size,sample_hostname
-1,Monroe Woodbury Middle School,public,RIG (GeoLite2 + reverse DNS),4079,4079,4079,0,20,yes,,,mwcsd-209-222-32-8.mw.k12.ny.us
+1,Monroe Woodbury Middle School,public,RIG (GeoLite2 + reverse DNS),4079,4079,4079,0,20,yes,,,mwcsd-209-222-32-2.mw.k12.ny.us
+1,Sachem Central School District,public,RIG (GeoLite2 + reverse DNS),4050,4050,0,0,20,yes,,,
+1,Chateaugay Central School,public,RIG (GeoLite2 + reverse DNS),254,0,254,0,0,no,,,1.159.cpcs.k12.ny.us
+1,Scarsdale Middle School,public,RIG (GeoLite2 + reverse DNS),28,0,28,0,0,no,,,scarmail.scarsdaleschools.k12.ny.us
+1,Beacon Central School District,public,RIG (GeoLite2 + reverse DNS),14,14,0,0,14,yes,,,
+1,Lake Placid High School,public,RIG (GeoLite2 + reverse DNS),2,2,0,1,1,no,,,
 2,Albany Schoharie Schenectady BOCES,public,ARIN WHOIS ownership,65534,,,,,yes,163.153.0.0/16,65534,
 2,BOCES,public,ARIN WHOIS ownership,284,,,,,yes,199.221.4.0/24 | 4.43.108.64/27,284,
 2,BOCES Southern Westchester Lower Hudson Regional Information Center,public,ARIN WHOIS ownership,65534,,,,,yes,166.109.0.0/16,65534,

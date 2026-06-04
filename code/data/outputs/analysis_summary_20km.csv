@@ -139,7 +139,6 @@ Seneca Falls Middle School,sampled,0,0,0,0,0,,
 Skaneateles High School,sampled,0,0,0,0,0,,
 Red Jacket High School,sampled,0,0,0,0,0,,
 Amsterdam High School,sampled,0,0,0,0,0,,
-Kenmore West Sr. High School,sampled,0,0,0,0,0,,
 Pembroke Jr. Sr. High School,sampled,0,0,0,0,0,,
 Eagle Hill Middle School,sampled,0,0,0,0,0,,
 Enders Road Elementary School,sampled,0,0,0,0,0,,
@@ -179,9 +178,9 @@ Sandy Creek High School,sampled,0,0,0,0,0,,
 General Bruce C. Clark Junior/Senior High School,sampled,0,0,0,0,0,,
 Ohio Elementary School,sampled,0,0,0,0,0,,
 Dexter Elementary School,sampled,0,0,0,0,0,,
-Indian River Central High School,sampled,0,0,0,0,0,,
+Indian River Central High School,sampled,2,0,0,2,1,24.39.160.166,metaframe.albany-academy.com
 Theresa Elementary School,sampled,0,0,0,0,0,,
-Lake Placid High School,sampled,0,0,0,0,0,,
+Lake Placid High School,sampled,2,2,0,0,2,208.125.61.139,mail.lakeplacidlodge.com
 Paul Smiths College,sampled,0,0,0,0,0,,
 Grant C. Madill Elementary School,sampled,0,0,0,0,0,,
 John F. Kennedy Elementary School,sampled,0,0,0,0,0,,
@@ -190,4 +189,8 @@ Malone Middle School,sampled,0,0,0,0,0,,
 Flanders Elementary School,sampled,0,0,0,0,0,,
 Madison Elementary School,sampled,0,0,0,0,0,,
 Rouses Point Elementary School,sampled,0,0,0,0,0,,
-Monroe Woodbury Middle School,reattributed,4079,4079,0,0,2,209.222.32.8,mwcsd-209-222-32-8.mw.k12.ny.us
+Beacon Central School District,reattributed,14,14,0,0,2,64.72.66.66,host2.beaconk12.org
+Chateaugay Central School,reattributed,254,0,254,0,2,163.153.159.1,1.159.cpcs.k12.ny.us
+Monroe Woodbury Middle School,reattributed,4079,4079,0,0,3,209.222.32.2,mwcsd-209-222-32-2.mw.k12.ny.us
+Sachem Central School District,reattributed,4050,4050,0,0,3,206.201.208.3,206-201-208-3.sachem.edu
+Scarsdale Middle School,reattributed,28,0,28,0,2,168.100.171.4,scarmail.scarsdaleschools.k12.ny.us
