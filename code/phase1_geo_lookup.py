@@ -1,23 +1,20 @@
-"""
-Phase 1: scan GeoLite2 for every /24 block within RADIUS_KM of any school.
-
-Uses a spatial grid index so each block only checks the schools in its cell.
-Streams results to disk to keep memory usage flat.
-"""
+"""Phase 1: scan GeoLite2 and IPinfo location for every /24 block within RADIUS_KM of any school."""
 
 import csv
+import datetime
+import gzip
 import ipaddress
 import math
 from collections import defaultdict
 import maxminddb
 
-SCHOOLS_FILE = "data/inputs/schools_selected.csv"
-OUTPUT_FILE  = "data/outputs/phase1_candidates.csv"
-DB_FILE      = "data/inputs/GeoLite2-City.mmdb"
-RADIUS_KM    = 10
-GRID_DEG     = 0.5   # cell size in degrees, ~55km
+SCHOOLS_FILE          = "data/inputs/schools_selected.csv"
+OUTPUT_FILE           = "data/outputs/phase1_candidates.csv"
+DB_FILE               = "data/inputs/GeoLite2-City.mmdb"
+IPINFO_LOCATION_FILE  = "data/inputs/ipinfo/ipinfo_location.csv.gz"
+RADIUS_KM             = 10
+GRID_DEG              = 0.5  # ~55km cells
 
-# NY state bounding box: drop blocks clearly outside NY early
 NY_LAT_MIN, NY_LAT_MAX =  40.4,  45.1
 NY_LON_MIN, NY_LON_MAX = -79.9, -71.7
 
@@ -49,8 +46,8 @@ def scan_database(db_path, school_grid, grid_deg, radius_km, seen_cidrs, writer)
     count = 0
     with maxminddb.open_database(db_path) as db:
         for network, record in db:
-            cidr = str(network)
-            loc  = record.get("location") or {}
+            cidr   = str(network)
+            loc    = record.get("location") or {}
             ip_lat = loc.get("latitude")
             ip_lon = loc.get("longitude")
             if ip_lat is None or ip_lon is None:
@@ -73,13 +70,53 @@ def scan_database(db_path, school_grid, grid_deg, radius_km, seen_cidrs, writer)
                 if not (s["min_lat"] <= ip_lat <= s["max_lat"]
                         and s["min_lon"] <= ip_lon <= s["max_lon"]):
                     continue
-                if distance_km(s["lat"], s["lon"], ip_lat, ip_lon) > radius_km:
+                dist = distance_km(s["lat"], s["lon"], ip_lat, ip_lon)
+                if dist > radius_km:
                     continue
                 if cidr not in seen_cidrs:
                     seen_cidrs.add(cidr)
-                    writer.writerow({"cidr": cidr, "school_name": s["name"]})
+                    writer.writerow({"cidr": cidr, "school_name": s["name"],
+                                     "distance_km": round(dist, 2)})
                     s["count"] += 1
                     count += 1
+    return count
+
+
+def scan_ipinfo_location(path, school_grid, grid_deg, radius_km, seen_cidrs, writer):
+    count = 0
+    with gzip.open(path, 'rt', encoding='utf-8') as f:
+        for row in csv.DictReader(f):
+            try:
+                ip_lat = float(row['latitude'])
+                ip_lon = float(row['longitude'])
+            except (ValueError, KeyError):
+                continue
+
+            if not (NY_LAT_MIN <= ip_lat <= NY_LAT_MAX and NY_LON_MIN <= ip_lon <= NY_LON_MAX):
+                continue
+
+            cidr = row['network']
+            try:
+                if ipaddress.ip_network(cidr, strict=False).prefixlen < 24:
+                    continue
+            except ValueError:
+                continue
+
+            cell = (int(math.floor(ip_lat / grid_deg)), int(math.floor(ip_lon / grid_deg)))
+            for s in school_grid.get(cell, []):
+                if not (s["min_lat"] <= ip_lat <= s["max_lat"]
+                        and s["min_lon"] <= ip_lon <= s["max_lon"]):
+                    continue
+                dist = distance_km(s["lat"], s["lon"], ip_lat, ip_lon)
+                if dist > radius_km:
+                    continue
+                if cidr not in seen_cidrs:
+                    seen_cidrs.add(cidr)
+                    writer.writerow({"cidr": cidr, "school_name": s["name"],
+                                     "distance_km": round(dist, 2)})
+                    s["count"] += 1
+                    count += 1
+                break  # assign each CIDR to first matching school only
     return count
 
 
@@ -109,18 +146,26 @@ def run(radius_km=RADIUS_KM, schools_file=SCHOOLS_FILE, output_file=OUTPUT_FILE)
     seen_cidrs = set()
 
     with open(output_file, "w", newline="", encoding="utf-8") as out_f:
-        writer = csv.DictWriter(out_f, fieldnames=["cidr", "school_name"])
+        writer = csv.DictWriter(out_f, fieldnames=["cidr", "school_name", "distance_km"])
         writer.writeheader()
-        import datetime
+
         with maxminddb.open_database(DB_FILE) as _db:
             build_epoch = _db.metadata().build_epoch
             build_date  = datetime.datetime.utcfromtimestamp(build_epoch).strftime("%Y-%m-%d")
         print(f"GeoLite2-City build date: {build_date}  (record this for reproducibility)")
         print(f"Scanning {DB_FILE} ...")
-        n = scan_database(DB_FILE, school_grid, GRID_DEG, radius_km, seen_cidrs, writer)
-        print(f"  {n} blocks found")
+        n_geo = scan_database(DB_FILE, school_grid, GRID_DEG, radius_km, seen_cidrs, writer)
+        print(f"  {n_geo} blocks from GeoLite2")
 
-    print(f"\nDone. {n} blocks written to {output_file}")
+        print(f"Scanning {IPINFO_LOCATION_FILE} ...")
+        n_ip = scan_ipinfo_location(
+            IPINFO_LOCATION_FILE, school_grid, GRID_DEG, radius_km, seen_cidrs, writer
+        )
+        print(f"  {n_ip} additional blocks from IPinfo (not in GeoLite2)")
+
+    total = n_geo + n_ip
+    print(f"\nDone. {total} blocks written to {output_file}  "
+          f"(GeoLite2={n_geo}, IPinfo={n_ip})")
 
 
 if __name__ == "__main__":
