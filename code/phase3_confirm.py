@@ -1,20 +1,4 @@
-"""
-Phase 3: WHOIS/ASN confirmation.
 
-Takes the DNS matches from phase 2 and scores each IP on four signals:
-  1. dns_match      hostname contains the school name or a k12 keyword
-  2. ny_k12_domain  hostname is in *.k12.ny.us (NY state-managed DNS zone)
-  3. whois_match    educational ASN (Stanford ASdb) or known local ISP
-  4. fcc_match      ISP in the FCC broadband map matches the school's area
-
-ISP name matching uses TF-IDF brand keyword extraction (per the paper):
-ISP names often embed a canonical brand ("Comcast", "Verizon") that appears
-more rarely across the corpus than generic terms ("Inc.", "Services").
-Tokens with normalized IDF >= 0.7 are matched on overlap.
-
-Score 3+ = high confidence, 2 = medium, 1 = low.
-IPs owned by hosting providers (Cloudflare, AWS, ...) are flagged and scored down.
-"""
 
 import csv
 import math
