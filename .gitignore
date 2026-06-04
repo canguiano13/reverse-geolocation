@@ -16,6 +16,10 @@ code/data/outputs/phase_candidates_30km.csv
 
 code/data/outputs/verification_results.csv
 code/data/outputs/url_verification.csv
+code/data/outputs/schools_with_income.csv
+code/data/outputs/school_coverage.csv
+code/data/outputs/schools_with_income_and_confidence.csv
+cloud-provider-ip-addresses/
 
 .DS_Store
 # Byte-compiled / optimized / DLL files
