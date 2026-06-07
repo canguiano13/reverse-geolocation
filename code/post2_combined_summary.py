@@ -15,10 +15,11 @@ OVERLAP_STOP = {
     "fire", "training", "technical", "learning",
 }
 
-PHASE0_FILE = "data/outputs/phase0_arin.csv"
-PHASE3_FILE = "data/outputs/phase3_reattributed_10km.csv"
-PHASE4_FILE = "data/outputs/phase4_validated_10km.csv"
-OUTPUT_FILE = "data/outputs/combined_results_10km.csv"
+PHASE0_FILE  = "data/outputs/phase0_arin.csv"
+PHASE0B_FILE = "data/outputs/phase0b_rwhois.csv"
+PHASE3_FILE  = "data/outputs/phase3_reattributed_10km.csv"
+PHASE4_FILE  = "data/outputs/phase4_validated_10km.csv"
+OUTPUT_FILE  = "data/outputs/combined_results_10km.csv"
 
 
 def content_words(name):
@@ -33,8 +34,9 @@ def block_size(cidr):
         return 0
 
 
-def run(phase0_file=PHASE0_FILE, phase3_file=PHASE3_FILE,
-        phase4_file=PHASE4_FILE, output_file=OUTPUT_FILE):
+def run(phase0_file=PHASE0_FILE, phase0b_file=PHASE0B_FILE,
+        phase3_file=PHASE3_FILE, phase4_file=PHASE4_FILE,
+        output_file=OUTPUT_FILE):
 
     with open(phase3_file, newline="", encoding="utf-8") as f:
         rig_rows = list(csv.DictReader(f))
@@ -57,6 +59,14 @@ def run(phase0_file=PHASE0_FILE, phase3_file=PHASE3_FILE,
     arin_by_district = defaultdict(list)
     for r in arin_rows:
         arin_by_district[r["school_name"]].append(r)
+
+    rwhois_by_district = defaultdict(list)
+    try:
+        with open(phase0b_file, newline="", encoding="utf-8") as f:
+            for r in csv.DictReader(f):
+                rwhois_by_district[r["school_name"]].append(r)
+    except FileNotFoundError:
+        pass
 
     output_rows = []
 
@@ -152,6 +162,48 @@ def run(phase0_file=PHASE0_FILE, phase3_file=PHASE3_FILE,
             "sample_hostname":  "",
         })
 
+    print("\n\n" + "=" * 65)
+    print("  TIER 2b: RWHOIS SUB-ALLOCATIONS")
+    print("  IP blocks from ISP-maintained RWHOIS servers (not in ARIN)")
+    print("=" * 65)
+
+    # Names already covered by Tier 1 or Tier 2
+    covered_names = set(rig_by_district.keys()) | set(arin_by_district.keys())
+
+    for district, blocks in sorted(rwhois_by_district.items()):
+        total_ips = sum(block_size(r["cidr"]) for r in blocks)
+        cidrs     = [r["cidr"] for r in blocks]
+
+        # Check overlap with already-covered districts
+        cw = content_words(district)
+        already_covered = bool(cw) and any(
+            any(re.search(r'\b' + re.escape(w) + r'\b', cname.lower()) for w in cw)
+            for cname in covered_names
+        )
+
+        status = "duplicate (already in Tier 1 or 2)" if already_covered else "new (RWHOIS only)"
+        print(f"\n  {district}")
+        print(f"    Blocks : {', '.join(cidrs)}")
+        print(f"    ~IPs   : {total_ips:,}")
+        print(f"    Status : {status}")
+
+        if not already_covered:
+            output_rows.append({
+                "tier":             "2b",
+                "district":         district,
+                "district_type":    "public",
+                "method":           "RWHOIS sub-allocation",
+                "total_ips":        total_ips,
+                "high_confidence":  "",
+                "ny_k12_confirmed": "",
+                "ripe_validated":   "",
+                "ripe_skipped":     "",
+                "also_in_arin":     "no",
+                "arin_blocks":      " | ".join(cidrs),
+                "arin_block_size":  total_ips,
+                "sample_hostname":  "",
+            })
+
     fieldnames = [
         "tier", "district", "district_type", "method", "total_ips", "high_confidence",
         "ny_k12_confirmed", "ripe_validated", "ripe_skipped",
@@ -164,16 +216,20 @@ def run(phase0_file=PHASE0_FILE, phase3_file=PHASE3_FILE,
 
     t1   = [r for r in output_rows if r["tier"] == 1]
     t2   = [r for r in output_rows if r["tier"] == 2]
+    t2b  = [r for r in output_rows if r["tier"] == "2b"]
     dual = [r for r in t1 if r["also_in_arin"] == "yes"]
 
     print("\n\n" + "=" * 65)
     print("  COMBINED SUMMARY")
     print("=" * 65)
-    print(f"  Tier 1 (RIG confirmed)   : {len(t1)} districts, "
+    print(f"  Tier 1  (RIG confirmed)    : {len(t1)} districts, "
           f"{sum(r['total_ips'] for r in t1):,} IPs")
-    print(f"  Tier 2 (ARIN ownership)  : {len(t2)} districts, "
+    print(f"  Tier 2  (ARIN ownership)   : {len(t2)} districts, "
           f"{sum(r['arin_block_size'] for r in t2 if r['arin_block_size']):,} registered IPs")
-    print(f"  Dual confirmation        : {len(dual)} districts (both methods agree)")
+    print(f"  Tier 2b (RWHOIS new only)  : {len(t2b)} districts, "
+          f"{sum(r['arin_block_size'] for r in t2b if r['arin_block_size']):,} registered IPs")
+    print(f"  Dual confirmation          : {len(dual)} districts (both methods agree)")
+    print(f"  Total unique districts     : {len(t1) + len(t2) + len(t2b)}")
     print(f"\n  Results written to {output_file}")
 
 
