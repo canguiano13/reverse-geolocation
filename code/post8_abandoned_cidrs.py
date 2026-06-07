@@ -1,5 +1,3 @@
-"""Phase 1 CIDRs minus Phase 2 matches, per radius."""
-
 import csv
 import ipaddress
 import os

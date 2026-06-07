@@ -1,14 +1,3 @@
-"""Phase 2: reverse DNS over Phase 1 candidates.
-
-Probe-first: check 5 IPs per /24 before expanding the block. Checkpoints
-per school so a killed run can resume.
-
-ISI Verfploeter hitlist (when present) provides two speed-ups:
-  1. Confirmed-dead /24s are skipped entirely before any DNS probe.
-  2. Known-responsive IPs are tried first; fall back to first-N scan only
-     for blocks absent from the hitlist (new allocations, ICMP-filtered nets).
-"""
-
 import bz2
 import csv
 import gc
@@ -24,17 +13,17 @@ import numpy as np
 import dns.resolver
 import dns.reversename
 
-INPUT_FILE    = "data/outputs/phase1_candidates.csv"
-OUTPUT_FILE   = "data/outputs/phase2_filtered.csv"
-ANYCAST_FILE  = "data/inputs/ipinfo/anycast_ranges_only.csv.gz"
+INPUT_FILE = "data/outputs/phase1_candidates.csv"
+OUTPUT_FILE = "data/outputs/phase2_filtered.csv"
+ANYCAST_FILE = "data/inputs/ipinfo/anycast_ranges_only.csv.gz"
 ISI_HITLIST_GLOB = "data/inputs/isi/internet_address_verfploeter_hitlist_*.fsdb.bz2"
 
-TIMEOUT     = 1.0
-WORKERS     = 8
-MAX_CIDRS   = 500  # schools beyond this are GeoLite2 ISP-aggregate noise
+TIMEOUT = 1.0
+WORKERS = 8
+MAX_CIDRS = 500  # schools beyond this are GeoLite2 ISP-aggregate noise
 N_PROBE_IPS = 5
 PROBE_BATCH = 25
-IP_BATCH    = 200
+IP_BATCH = 200
 
 socket.setdefaulttimeout(2.0)
 
@@ -73,19 +62,7 @@ K12_INDICATORS = {
     "csd", "ufsd", "boces",
 }
 
-# ── ISI Verfploeter hitlist ───────────────────────────────────────────────
-# Loaded once at startup. Two numpy uint32 arrays, each sorted by /24 network
-# address, let us binary-search in ~39 MB instead of a Python set (~600 MB).
-#
-#   _hl_resp_net  : /24 network addresses that have at least one responsive IP
-#   _hl_resp_oct  : first responsive last-octet for the matching /24
-#   _hl_dead_net  : /24 network addresses confirmed non-responsive (all '-')
-#
-# Probe strategy per /24:
-#   dead  -> skip immediately (return False from probe_block)
-#   alive -> probe the hitlist IP first, then fill up to N_PROBE_IPS if needed
-#   absent-> probe first N_PROBE_IPS as before (new allocation / ICMP-blocked)
-
+# hitlist arrays loaded at startup; sorted for binary search
 _hl_resp_net = np.array([], dtype=np.uint32)
 _hl_resp_oct = np.array([], dtype=np.uint8)
 _hl_dead_net = np.array([], dtype=np.uint32)
@@ -130,7 +107,6 @@ def load_hitlist(path):
 
 
 def _net24_int(cidr_str):
-    """Return the /24 network address as a uint32 int, or None on error."""
     try:
         return int(ipaddress.ip_network(cidr_str, strict=False).network_address) & 0xFFFFFF00
     except Exception:
@@ -138,7 +114,6 @@ def _net24_int(cidr_str):
 
 
 def hitlist_is_dead(cidr_str):
-    """True if the /24 is confirmed non-responsive in the hitlist."""
     if len(_hl_dead_net) == 0:
         return False
     key = _net24_int(cidr_str)
@@ -149,7 +124,6 @@ def hitlist_is_dead(cidr_str):
 
 
 def hitlist_probe_ip(cidr_str):
-    """Return a known-responsive IP string for this /24, or None if absent."""
     if len(_hl_resp_net) == 0:
         return None
     key = _net24_int(cidr_str)
@@ -161,7 +135,6 @@ def hitlist_probe_ip(cidr_str):
     return None
 
 
-# Anycast ranges loaded at startup; used to skip PTR lookups on anycast IPs.
 _anycast_ranges = []  # sorted list of (start_int, end_int)
 
 
@@ -288,18 +261,8 @@ def classify(hostname, keywords, domain_candidates=None):
 
 
 def probe_block(cidr, keywords, domain_candidates):
-    """Return True if any probe IP in this /24 has a matching PTR record.
-
-    Uses ISI hitlist when available to pick a better first probe IP.
-    We do NOT skip dead blocks: the hitlist measures ICMP responsiveness,
-    but school networks routinely block ICMP while still having valid PTR
-    records.  Skipping dead blocks causes severe recall loss for schools.
-
-    Hitlist benefit retained: when the hitlist knows a responsive IP for
-    this /24, we probe that IP first (more likely to have a PTR record),
-    then fill remaining probe slots from the start of the host range.
-    Blocks absent from the hitlist fall back to first-N_PROBE_IPS probing.
-    """
+    # returns True if any probe IP in this /24 has a matching PTR record
+    # we do NOT skip hitlist-dead blocks; school nets block ICMP but still have PTR records
     # Sequential probes per block - nested ThreadPoolExecutors previously caused OOM.
     try:
         net = ipaddress.ip_network(cidr, strict=False)

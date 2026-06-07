@@ -1,12 +1,10 @@
-"""Phase 3b: re-attribute Phase 3 results to the correct district via PTR hostname."""
-
 import csv
 import re
 from collections import defaultdict
 
-INPUT_FILE   = "data/outputs/phase3_confirmed_10km.csv"
+INPUT_FILE = "data/outputs/phase3_confirmed_10km.csv"
 SCHOOLS_FILE = "data/inputs/gigamaps_schools_ny.csv"
-OUTPUT_FILE  = "data/outputs/phase3_reattributed_10km.csv"
+OUTPUT_FILE = "data/outputs/phase3_reattributed_10km.csv"
 
 # Compound district codes that can't be auto-split are mapped explicitly.
 MANUAL_MAPPINGS = {

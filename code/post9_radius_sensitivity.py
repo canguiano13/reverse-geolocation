@@ -1,5 +1,3 @@
-"""Compare Tier 1 results across radii by filtering the 20km run on distance_km."""
-
 import csv
 import ipaddress
 import os
@@ -16,7 +14,7 @@ def load_rows(path):
 
 
 def filter_by_radius(rows, radius_km):
-    """Keep rows within radius_km. Rows with no distance_km (ARIN blocks) are always kept."""
+    # rows with no distance_km (ARIN blocks) are always kept
     out = []
     for row in rows:
         d = row.get("distance_km", "")

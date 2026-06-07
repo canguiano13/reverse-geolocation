@@ -1,5 +1,3 @@
-"""FCC provider lookup - find ISPs serving each school's census tract."""
-
 import csv
 import pandas as pd
 
@@ -13,7 +11,6 @@ FCC_DATA_FILES = [
 
 
 def get_providers(census_tract):
-    """All ISP brand names serving a census tract (first 11 digits of block code)."""
     providers = set()
     for file_path in FCC_DATA_FILES:
         try:

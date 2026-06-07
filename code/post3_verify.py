@@ -1,12 +1,3 @@
-"""Verify high-confidence IPs against ARIN RDAP.
-
-Verdict logic:
-  1. Hostname in *.k12.ny.us           -> TRUE_POSITIVE
-  2. Hostname in *.k12.XX.us (XX!=ny)  -> FALSE_POSITIVE
-  3. ARIN org contains edu keyword + NY indicator -> TRUE_POSITIVE
-  4. Otherwise                         -> MANUAL_CHECK
-"""
-
 import csv
 import re
 import time
@@ -20,7 +11,6 @@ EDU_KEYWORDS  = {"school", "k12", "district", "education", "academy", "boces", "
 
 
 def arin_lookup(ip):
-    """Returns (org_name, country) from ARIN RDAP."""
     try:
         r = requests.get(ARIN_URL.format(ip), timeout=8)
         if r.status_code != 200:
@@ -44,7 +34,6 @@ def arin_lookup(ip):
 
 
 def classify(hostname, org):
-    """Returns (verdict, reason)."""
     h = hostname.lower()
     o = org.lower()
 

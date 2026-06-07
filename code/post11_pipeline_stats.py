@@ -1,15 +1,3 @@
-"""post11_pipeline_stats.py
-
-Generates three metrics that mirror the Waldo paper's key tables/figures:
-
-  1. Stage-by-stage /24 reduction table  (paper Table 4)
-  2. FCC provider match breakdown        (paper Table 5)
-  3. ISI hitlist reduction %             (paper §4.2.3 -- 34.9% benchmark)
-
-No pipeline reruns needed -- reads existing CSV outputs.
-Run after Phase 3 completes (Phase 4 optional, adds one row to table 1).
-"""
-
 import csv
 import ipaddress
 import os
@@ -17,7 +5,6 @@ from collections import defaultdict
 
 RADIUS = 20   # change to match whichever radius you ran
 
-# ── Input files ───────────────────────────────────────────────────────────
 CANDIDATES_FILE  = f"data/outputs/phase_candidates_{RADIUS}km.csv"
 PHASE2_FILE      = f"data/outputs/phase2_filtered_{RADIUS}km.csv"
 PHASE3_FILE      = f"data/outputs/phase3_confirmed_{RADIUS}km.csv"
@@ -29,8 +16,6 @@ OUT_PROVIDER     = f"data/outputs/post11_provider_match_{RADIUS}km.csv"
 OUT_HITLIST      = f"data/outputs/post11_hitlist_reduction_{RADIUS}km.csv"
 
 
-# ── Helpers ───────────────────────────────────────────────────────────────
-
 def read_csv(path):
     if not os.path.exists(path):
         return []
@@ -39,7 +24,6 @@ def read_csv(path):
 
 
 def net24(cidr_or_ip, is_ip=False):
-    """Return the /24 network string for a CIDR or IP address."""
     try:
         if is_ip:
             return str(ipaddress.IPv4Network(f"{cidr_or_ip}/24", strict=False))
@@ -65,7 +49,6 @@ def unique_schools(rows, field="school_name"):
 
 
 def median_asns(rows):
-    """Median unique ASNs per school (Phase 3+ only, has 'asn' column)."""
     per_school = defaultdict(set)
     for r in rows:
         school = r.get("school_name", "").strip()
@@ -78,8 +61,6 @@ def median_asns(rows):
     mid = len(counts) // 2
     return counts[mid] if len(counts) % 2 else (counts[mid-1] + counts[mid]) / 2
 
-
-# ── 1. Stage-by-stage /24 reduction ──────────────────────────────────────
 
 def stage_reduction():
     print("\n=== 1. Stage-by-stage /24 reduction (mirrors paper Table 4) ===")
@@ -128,8 +109,6 @@ def stage_reduction():
     print(f"\nWritten -> {OUT_REDUCTION}")
     return rows_out
 
-
-# ── 2. FCC provider match breakdown ──────────────────────────────────────
 
 def provider_match():
     print("\n=== 2. FCC provider match breakdown (mirrors paper Table 5) ===")
@@ -184,8 +163,6 @@ def provider_match():
         w.writerows(rows_out)
     print(f"\nWritten -> {OUT_PROVIDER}")
 
-
-# ── 3. ISI hitlist reduction ──────────────────────────────────────────────
 
 def hitlist_reduction():
     print("\n=== 3. ISI hitlist reduction (paper benchmark: 34.9%) ===")
@@ -258,8 +235,6 @@ def hitlist_reduction():
         w.writerows(rows_out)
     print(f"\nWritten -> {OUT_HITLIST}")
 
-
-# ── Main ──────────────────────────────────────────────────────────────────
 
 def run():
     print(f"Pipeline stats for {RADIUS}km run")

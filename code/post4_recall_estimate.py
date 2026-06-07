@@ -1,5 +1,3 @@
-"""Probe ARIN Tier-2 blocks for .k12.ny.us PTR records."""
-
 import csv
 import ipaddress
 import socket
@@ -17,7 +15,6 @@ TIMEOUT       = 3.0
 
 socket.setdefaulttimeout(TIMEOUT)
 
-# macOS mDNSResponder throttles under sustained PTR load; query public resolvers directly.
 _resolver = dns.resolver.Resolver(configure=False)
 _resolver.nameservers = ["8.8.8.8", "8.8.4.4", "1.1.1.1"]
 _resolver.timeout = 1.5

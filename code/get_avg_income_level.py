@@ -1,12 +1,3 @@
-"""
-Calculates income level off of county median household income data for each school LatLong in the input.
-Then joins the result into combined_results_20km.csv so income data sits alongside IP identification results.
-
-Input:  data/inputs/schools_selected.csv
-Output: data/outputs/schools_with_income.csv
-        data/outputs/combined_results_with_income_20km.csv
-"""
-
 import os
 import time
 import pandas as pd
@@ -18,10 +9,6 @@ OUTPUT_PATH   = "data/outputs/schools_with_income.csv"
 COMBINED_PATH = "data/outputs/combined_results_20km.csv"
 ENRICHED_PATH = "data/outputs/combined_results_with_income_20km.csv"
 
-"""
-Worker function that identifies the county for a given pair of coordinates
-and fetches the county-level median household income from the ACS data.
-"""
 def get_county_income_for_row(lat, lon, state_fips="36", census_key=None):
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36'
@@ -30,7 +17,6 @@ def get_county_income_for_row(lat, lon, state_fips="36", census_key=None):
     clean_lat = round(float(lat), 5)
     clean_lon = round(float(lon), 5)
 
-    #census geocoder to get county for coords
     geocoder_url = "https://geocoding.geo.census.gov/geocoder/geographies/coordinates"
     geo_params = {
         "x": clean_lon,
@@ -54,7 +40,7 @@ def get_county_income_for_row(lat, lon, state_fips="36", census_key=None):
 
         county_info = geographies["Counties"][0]
         county_name = county_info["NAME"]
-        county_fips = county_info["COUNTY"] #get 3-digit county id
+        county_fips = county_info["COUNTY"]
 
         #query ACS financial tables for county
         #var B19013_001E is Median Household Income for county
@@ -79,10 +65,6 @@ def get_county_income_for_row(lat, lon, state_fips="36", census_key=None):
         return "Lookup Failed", f"Error: {str(e)}"
 
 
-"""
-    Loads csv file, loops through coordinates, maps them to counties,
-    and appends median household income data.
-"""
 def batch_process_counties(input_csv, output_csv, census_key=None, state_fips="36"):
     print(f"Loading spreadsheet dataset: {input_csv}...")
     df = pd.read_csv(input_csv)
@@ -109,7 +91,7 @@ def batch_process_counties(input_csv, output_csv, census_key=None, state_fips="3
         except ValueError:
             incomes.append(None)
 
-        time.sleep(0.5) #have gap between api calls
+        time.sleep(0.5)
 
     df['census_county'] = counties
     df['county_median_household_income'] = incomes
@@ -118,11 +100,6 @@ def batch_process_counties(input_csv, output_csv, census_key=None, state_fips="3
     print(f"\nProcessing complete! Results saved to output: {output_csv}")
 
 
-"""
-    Joins the income data produced by batch_process_counties into the
-    combined pipeline results CSV so income sits alongside IP identification
-    confidence scores.
-"""
 def join_with_combined_results(income_csv, combined_csv, output_csv):
     if not os.path.exists(combined_csv):
         print(f"Skipping join: {combined_csv} not found.")

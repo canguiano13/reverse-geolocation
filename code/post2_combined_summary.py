@@ -1,5 +1,3 @@
-"""Two-tier results summary combining RIG (Tier 1) and ARIN (Tier 2) districts."""
-
 import csv
 import re
 import ipaddress

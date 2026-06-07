@@ -1,5 +1,3 @@
-"""FCC census block lookup - resolve each school's GPS coordinates to a census block FIPS code."""
-
 import csv
 import requests
 

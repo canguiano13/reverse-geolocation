@@ -1,14 +1,12 @@
-"""Phase 0: ARIN WHOIS discovery - search for NY school orgs and pull their IP blocks."""
-
 import csv
 import ipaddress
 import time
 import requests
 
 OUTPUT_FILE = "data/outputs/phase0_arin.csv"
-HEADERS     = {"Accept": "application/json"}
-SLEEP       = 0.8
-RETRY       = 3
+HEADERS = {"Accept": "application/json"}
+SLEEP = 0.8
+RETRY = 3
 
 # NY-specific terms (boces, ufsd) skip state verification.
 # Generic terms get checked against the org's state field.
@@ -46,7 +44,7 @@ def search_orgs(keyword):
 
 
 def is_ny_org(handle):
-    """True if org is in NY, False if confirmed not-NY, None if lookup failed."""
+    # returns True=NY, False=not-NY, None=lookup failed
     data = arin_get(f"https://whois.arin.net/rest/org/{handle}")
     if not data:
         return None
@@ -64,7 +62,6 @@ def get_networks(handle):
 
 
 def net_to_cidrs(net_ref):
-    """Convert ARIN net (start + end IP) to IPv4 CIDR notation."""
     start = net_ref.get("@startAddress", "")
     end   = net_ref.get("@endAddress",   "")
     if not start or not end:

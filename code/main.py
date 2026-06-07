@@ -1,5 +1,3 @@
-"""Run the full school IP identification pipeline."""
-
 import csv
 import gzip
 import ipaddress
@@ -33,13 +31,13 @@ SCHOOLS_FILE = "data/inputs/schools_selected.csv"
 # SCHOOLS_FILE = "data/inputs/targeted_schools.csv"
 FORCE_RERUN_FROM = None
 
-PHASE0_FILE      = "data/outputs/phase0_arin.csv"
+PHASE0_FILE = "data/outputs/phase0_arin.csv"
 SCHOOL_PROVIDERS = "data/inputs/school_providers.csv"
-IPINFO_ASN_FILE  = "data/inputs/ipinfo/ipinfo_asn.csv.gz"
+IPINFO_ASN_FILE = "data/inputs/ipinfo/ipinfo_asn.csv.gz"
 
 
 def load_hosting_set(asn_file):
-    """Build a set of /24 network address ints classified as hosting by IPinfo."""
+    # returns a set of /24 network ints classified as hosting
     hosting = set()
     try:
         with gzip.open(asn_file, 'rt', encoding='utf-8') as f:
@@ -66,7 +64,6 @@ def load_hosting_set(asn_file):
 
 
 def filter_hosting_cidrs(candidates_file, hosting_set):
-    """Remove hosting-type CIDRs from candidates file in-place."""
     if not hosting_set:
         return
     with open(candidates_file, newline='', encoding='utf-8') as f:
@@ -113,11 +110,7 @@ def should_run(phase_num, output_path):
 
 
 def merge_candidates(arin_file, geo_file, output_file):
-    """Combine ARIN (phase 0) and geo (phase 1) blocks, deduplicated.
-
-    ARIN blocks have no geo distance; distance_km is left empty for them.
-    Phase 1 blocks carry their distance_km from the geo scan.
-    """
+    # merge ARIN and geo blocks, deduplicated
     rows = []
     seen = set()
     for filepath in [arin_file, geo_file]:

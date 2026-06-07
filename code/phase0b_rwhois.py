@@ -1,21 +1,4 @@
-"""
-phase0b_rwhois.py
-
-Offline RWHOIS discovery -- finds NY school IP blocks from IPinfo's RWHOIS
-sub-allocation dataset. This complements Phase 0 (ARIN) by capturing districts
-whose blocks are registered under ISP-maintained RWHOIS servers rather than
-directly with ARIN.
-
-ARIN only shows who originally received a large IP block. When an ISP splits
-that block among customers (like school districts), those sub-allocations live
-in RWHOIS -- not in ARIN. This script finds those.
-
-Output format is identical to phase0_arin.csv so post2_combined_summary.py
-can merge both sources without changes.
-
-Input:  data/inputs/ipinfo/rwhois.csv.gz
-Output: data/outputs/phase0b_rwhois.csv
-"""
+# finds NY school IP blocks from IPinfo RWHOIS sub-allocation dataset
 
 import csv
 import gzip
@@ -82,7 +65,6 @@ EXCLUDE_KEYWORDS = [
 
 
 def is_ny(row):
-    """Return True if the RWHOIS entry is in New York state by zip code."""
     postal = row.get("postal", "").strip()
     try:
         zip5 = int(postal[:5])
@@ -92,7 +74,6 @@ def is_ny(row):
 
 
 def is_k12_school(name, descr):
-    """Return True if the name/description looks like a K-12 school."""
     text = (name + " " + descr).lower().replace("_", " ")
     if any(excl in text for excl in EXCLUDE_KEYWORDS):
         return False
@@ -100,7 +81,6 @@ def is_k12_school(name, descr):
 
 
 def normalize_cidr(range_str):
-    """Validate and normalize a CIDR string. Returns None if invalid."""
     try:
         net = ipaddress.IPv4Network(range_str.strip(), strict=False)
         return str(net)

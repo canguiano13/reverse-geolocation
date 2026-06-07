@@ -1,13 +1,11 @@
-"""Per-school IP summary from Phase 3 (and Phase 4 if present)."""
-
 import csv
 import os
 from collections import defaultdict
 
-INPUT_FILE     = "data/outputs/phase3_confirmed.csv"
-PHASE4_FILE    = "data/outputs/phase4_validated.csv"
-SCHOOLS_FILE   = "data/inputs/schools_selected.csv"
-OUTPUT_FILE    = "data/outputs/analysis_summary.csv"
+INPUT_FILE = "data/outputs/phase3_confirmed.csv"
+PHASE4_FILE = "data/outputs/phase4_validated.csv"
+SCHOOLS_FILE = "data/inputs/schools_selected.csv"
+OUTPUT_FILE = "data/outputs/analysis_summary.csv"
 OUTPUT_FILE_P4 = "data/outputs/analysis_summary_phase4.csv"
 
 FIELDS = ["school_name", "source", "total_ips", "high", "medium", "low",

@@ -1,5 +1,3 @@
-"""Count active RIPE Atlas probes within 40km of each school."""
-
 import csv
 import time
 import requests

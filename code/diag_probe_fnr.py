@@ -1,10 +1,3 @@
-"""Audit Phase 2's probe-first filter for false negatives.
-
-For a random sample of blocks Phase 2 dropped, check N_CHECK_IPS random
-IPs for .k12.ny.us or other K-12 PTR records that the 5-probe heuristic
-might have missed.
-"""
-
 import csv
 import ipaddress
 import random

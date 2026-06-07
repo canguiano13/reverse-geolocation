@@ -1,26 +1,4 @@
-"""
-post13_school_coverage.py
-
-For each of the 192 schools in schools_selected.csv, shows what the pipeline
-found: how many IPs were identified and at what confidence level.
-
-Two matching strategies:
-  1. Direct name match  -- Phase 1 results where the school name was carried through
-  2. District proximity -- ARIN results (district-level) matched to schools within
-                          ~25 km of the district center
-
-Output columns:
-  school_name, ips_found, high, medium, low, best_confidence, source
-
-source values:
-  "direct"   -- IP was attributed to this school by name in phase3
-  "district" -- IP came from an ARIN district that covers this school geographically
-  "none"     -- pipeline found nothing for this school
-
-Input:  data/inputs/schools_selected.csv
-        data/outputs/phase3_confirmed_20km.csv
-Output: data/outputs/school_coverage.csv
-"""
+# per-school IP coverage from phase3 output
 
 import pandas as pd
 from math import radians, cos, sin, asin, sqrt

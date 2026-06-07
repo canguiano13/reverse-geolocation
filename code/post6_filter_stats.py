@@ -1,5 +1,3 @@
-"""Per-radius table of how many /24 prefixes, IPs, and schools survive each pipeline stage."""
-
 import csv
 import ipaddress
 import os
@@ -14,7 +12,6 @@ def ip_to_24(ip):
 
 
 def cidr_to_24s(cidr):
-    """Return list of /24 prefixes contained in a CIDR. Skips IPv6/malformed."""
     try:
         net = ipaddress.IPv4Network(cidr, strict=False)
     except (ipaddress.AddressValueError, ValueError):
@@ -44,7 +41,6 @@ def count_unique_24s_from_ips(path, col="ip_address"):
 
 
 def count_unique_24s_from_cidrs(path, col="cidr"):
-    """Expands wider CIDRs into component /24s."""
     if not os.path.exists(path):
         return 0
     seen = set()
@@ -69,7 +65,6 @@ def count_unique_values(path, col):
 
 
 def count_high_confidence(path):
-    """Returns (high-confidence IP count, distinct school count)."""
     if not os.path.exists(path):
         return 0, 0
     ips     = 0

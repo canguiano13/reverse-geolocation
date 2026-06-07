@@ -1,11 +1,3 @@
-"""Phase 3: ASN/org confirmation.
-
-Scores each IP on four signals: dns_match, strong_dns_match, whois_match, fcc_match.
-ISP name matching uses TF-IDF brand keyword extraction (normalized IDF >= 0.7).
-Score 3+ = high confidence (or 2+ when strong_dns_match), 1 = low.
-ASN lookup uses IPinfo IP-to-ASN dataset (offline, no live RDAP calls).
-"""
-
 import csv
 import gzip
 import ipaddress
@@ -13,10 +5,10 @@ import math
 import re
 from collections import Counter
 
-INPUT_FILE       = "data/outputs/phase2_filtered.csv"
-PROVIDERS_FILE   = "data/inputs/school_providers.csv"
-IPINFO_ASN_FILE  = "data/inputs/ipinfo/ipinfo_asn.csv.gz"
-OUTPUT_FILE      = "data/outputs/phase3_confirmed.csv"
+INPUT_FILE = "data/outputs/phase2_filtered.csv"
+PROVIDERS_FILE = "data/inputs/school_providers.csv"
+IPINFO_ASN_FILE = "data/inputs/ipinfo/ipinfo_asn.csv.gz"
+OUTPUT_FILE = "data/outputs/phase3_confirmed.csv"
 
 _GENERIC_TOKENS = {
     "inc", "llc", "corp", "corporation", "co", "ltd", "the",
@@ -25,15 +17,11 @@ _GENERIC_TOKENS = {
     "cable", "internet", "broadband", "company", "group",
 }
 
-# Backbone/transit providers that IPinfo sometimes tags as 'hosting'.
-# These are wholesale bandwidth providers that legitimately serve schools.
-# Verified against school_providers.csv -- only Zayo appears as an actual
-# NY school provider and is misclassified on some prefixes.
+# Zayo is misclassified as hosting on some prefixes but is a real school provider
 _BACKBONE_OVERRIDE = {"zayo"}
 
-# Module-level ASN lookup state
 _asn_entries = []   # sorted list of (net_start, net_end, prefix_len, asn, name, asn_type)
-_asn_cache   = {}   # /24 network_address_int -> (asn, name, asn_type)
+_asn_cache = {}   # /24 network_address_int -> (asn, name, asn_type)
 
 
 def load_ipinfo_asn(path):
@@ -61,7 +49,7 @@ def load_ipinfo_asn(path):
 
 
 def lookup_ip_asn(ip_str):
-    """Return (asn, org_name, asn_type) for ip_str. Results cached by /24."""
+    # results cached by /24 to avoid repeated lookups
     try:
         key = int(ipaddress.ip_address(ip_str)) & 0xFFFFFF00
     except ValueError:
@@ -156,7 +144,6 @@ def org_matches_provider(org_name, allowed_providers, brand_extractor):
 
 def score_ip(hostname, asn, org_name, asn_type, school_name, fcc_providers, brand_extractor,
              strong_dns_match=False):
-    """Returns (score, confidence, is_hosting, whois_match, fcc_match)."""
     h         = hostname.lower()
     org_lower = org_name.lower()
 

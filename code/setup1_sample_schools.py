@@ -1,10 +1,3 @@
-"""Sample schools from the statewide NY list via geographic grid.
-
-Splits NY State into a 9x9 grid and samples up to N schools per cell
-for geographic diversity. Only rerun if you need a fresh sample - the
-existing schools_selected.csv was used in the paper.
-"""
-
 import csv
 import math
 import random

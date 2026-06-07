@@ -1,9 +1,3 @@
-"""Forward-DNS check: do school URLs A-record to the IPs we found?
-
-NO_MATCH is expected - schools typically host their public site on a CDN/CMS
-separately from their operational network.
-"""
-
 import csv
 import ipaddress
 import re

@@ -1,5 +1,3 @@
-"""RIG (Tier 1) recall vs. ARIN (Tier 2)."""
-
 import csv
 import ipaddress
 import os

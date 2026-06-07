@@ -1,5 +1,3 @@
-"""Phase 1: scan GeoLite2 and IPinfo location for every /24 block within RADIUS_KM of any school."""
-
 import csv
 import datetime
 import gzip
@@ -8,14 +6,14 @@ import math
 from collections import defaultdict
 import maxminddb
 
-SCHOOLS_FILE          = "data/inputs/schools_selected.csv"
-OUTPUT_FILE           = "data/outputs/phase1_candidates.csv"
-DB_FILE               = "data/inputs/GeoLite2-City.mmdb"
-IPINFO_LOCATION_FILE  = "data/inputs/ipinfo/ipinfo_location.csv.gz"
-RADIUS_KM             = 10
-GRID_DEG              = 0.5  # ~55km cells
+SCHOOLS_FILE = "data/inputs/schools_selected.csv"
+OUTPUT_FILE = "data/outputs/phase1_candidates.csv"
+DB_FILE = "data/inputs/GeoLite2-City.mmdb"
+IPINFO_LOCATION_FILE = "data/inputs/ipinfo/ipinfo_location.csv.gz"
+RADIUS_KM = 10
+GRID_DEG = 0.5  # ~55km cells
 
-NY_LAT_MIN, NY_LAT_MAX =  40.4,  45.1
+NY_LAT_MIN, NY_LAT_MAX = 40.4, 45.1
 NY_LON_MIN, NY_LON_MAX = -79.9, -71.7
 
 

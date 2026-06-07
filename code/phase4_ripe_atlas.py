@@ -1,10 +1,3 @@
-"""Phase 4: RIPE Atlas validation via Speed-of-Internet (SoI) constraint.
-
-Pings each high-confidence IP from near probes (<40km) and far probes (>100km).
-If RTT from a far probe implies the IP is physically closer to that probe than
-to the school, it's flagged invalid. SoI constant: 4/9 * c ~= 133.2 km/ms.
-"""
-
 import csv
 import time
 import math
@@ -129,7 +122,6 @@ def min_rtt_for_probes(results, probe_ids):
 
 
 def is_soi_violation(far_rtt_ms, school_lat, school_lon, far_probe):
-    """True if RTT proves the IP is closer to the far probe than the school is."""
     coords = far_probe.get("geometry", {}).get("coordinates", [])
     if len(coords) != 2 or far_rtt_ms is None:
         return False
