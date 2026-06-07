@@ -1,11 +1,3 @@
-"""
-Cloud Provider IP Range Check
----------------------
-For each IP address in the input CSV, checks if it falls within any known cloud provider IP ranges.
-
-Run this once to generate the coverage table for the paper.
-"""
-
 import csv
 import subprocess
 import sys

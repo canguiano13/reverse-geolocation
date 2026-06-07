@@ -1,0 +1,195 @@
+                                    LANDER:internet address hitlist it115w-20260213
+
+From Predict
+
+README version: 15705, last modified: 2026-04-15.
+
+This file describes the trace dataset "internet_address_hitlist_it115w-20260213", generated on 2026-03-21, provided by
+the LANDER project.
+
+Contents
+
+  • 1 LANDER Metadata
+  • 2 Dataset Contents
+  • 3 Data Format
+       • 3.1 Additional targets
+  • 4 Prior Work
+  • 5 Citation
+  • 6 User Annotations
+
+LANDER Metadata
+
+┌───────────────────────────┬──────────────────────────────────────────────────────────────────────────────────────────┐
+│ dataSetName               │ internet_address_hitlist_it115w-20260213                                                 │
+├───────────────────────────┼──────────────────────────────────────────────────────────────────────────────────────────┤
+│ status                    │ usc-web-and-predict                                                                      │
+├───────────────────────────┼──────────────────────────────────────────────────────────────────────────────────────────┤
+│ shortDesc                 │ IPhitlist based on census up to it115w                                                   │
+├───────────────────────────┼──────────────────────────────────────────────────────────────────────────────────────────┤
+│ longDesc                  │ This IP hitlist was generated on 2026-03-21, based on census data from it100w to it115w. │
+│                           │ Hitlist contains one representative IP address for each /24 block which has appeared to  │
+│                           │ have responsive addresses during it100w - it115w.                                        │
+├───────────────────────────┼──────────────────────────────────────────────────────────────────────────────────────────┤
+│ datasetClass              │ Quasi-Restricted                                                                         │
+├───────────────────────────┼──────────────────────────────────────────────────────────────────────────────────────────┤
+│ commercialAllowed         │ true                                                                                     │
+├───────────────────────────┼──────────────────────────────────────────────────────────────────────────────────────────┤
+│ requestReviewRequired     │ true                                                                                     │
+├───────────────────────────┼──────────────────────────────────────────────────────────────────────────────────────────┤
+│ productReviewRequired     │ false                                                                                    │
+├───────────────────────────┼──────────────────────────────────────────────────────────────────────────────────────────┤
+│ ongoingMeasurement        │ false                                                                                    │
+├───────────────────────────┼──────────────────────────────────────────────────────────────────────────────────────────┤
+│ submissionMethod          │ Upload                                                                                   │
+├───────────────────────────┼──────────────────────────────────────────────────────────────────────────────────────────┤
+│ collectionStartDate       │ 2022-08-08                                                                               │
+├───────────────────────────┼──────────────────────────────────────────────────────────────────────────────────────────┤
+│ collectionStartTime       │ 00:00:00                                                                                 │
+├───────────────────────────┼──────────────────────────────────────────────────────────────────────────────────────────┤
+│ collectionEndDate         │                                                                                          │
+├───────────────────────────┼──────────────────────────────────────────────────────────────────────────────────────────┤
+│ collectionEndTime         │ 00:00:00                                                                                 │
+├───────────────────────────┼──────────────────────────────────────────────────────────────────────────────────────────┤
+│ availabilityStartDate     │ 2026-04-15                                                                               │
+├───────────────────────────┼──────────────────────────────────────────────────────────────────────────────────────────┤
+│ availabilityStartTime     │ 00:00:00                                                                                 │
+├───────────────────────────┼──────────────────────────────────────────────────────────────────────────────────────────┤
+│ availabilityEndDate       │ 2030-01-01                                                                               │
+├───────────────────────────┼──────────────────────────────────────────────────────────────────────────────────────────┤
+│ availabilityEndTime       │ 00:00:00                                                                                 │
+├───────────────────────────┼──────────────────────────────────────────────────────────────────────────────────────────┤
+│ anonymization             │ none                                                                                     │
+├───────────────────────────┼──────────────────────────────────────────────────────────────────────────────────────────┤
+│ archivingAllowed          │ false                                                                                    │
+├───────────────────────────┼──────────────────────────────────────────────────────────────────────────────────────────┤
+│ keywords                  │ category:address-space-status-data, subcategory:ip-hit-lists, address-collection,        │
+│                           │ topology                                                                                 │
+├───────────────────────────┼──────────────────────────────────────────────────────────────────────────────────────────┤
+│ format                    │ text                                                                                     │
+├───────────────────────────┼──────────────────────────────────────────────────────────────────────────────────────────┤
+│ access                    │ https                                                                                    │
+├───────────────────────────┼──────────────────────────────────────────────────────────────────────────────────────────┤
+│ hostName                  │ USC-LANDER                                                                               │
+├───────────────────────────┼──────────────────────────────────────────────────────────────────────────────────────────┤
+│ providerName              │ USC                                                                                      │
+├───────────────────────────┼──────────────────────────────────────────────────────────────────────────────────────────┤
+│ groupingId                │ internet address hitlists                                                                │
+├───────────────────────────┼──────────────────────────────────────────────────────────────────────────────────────────┤
+│ groupingSummaryFlag       │ false                                                                                    │
+├───────────────────────────┼──────────────────────────────────────────────────────────────────────────────────────────┤
+│ retrievalInstructions     │ download                                                                                 │
+├───────────────────────────┼──────────────────────────────────────────────────────────────────────────────────────────┤
+│ byteSize                  │ 121634816                                                                                │
+├───────────────────────────┼──────────────────────────────────────────────────────────────────────────────────────────┤
+│ expirationDays            │ 120                                                                                      │
+├───────────────────────────┼──────────────────────────────────────────────────────────────────────────────────────────┤
+│ uncompressedSize          │                                                                                          │
+├───────────────────────────┼──────────────────────────────────────────────────────────────────────────────────────────┤
+│ impactDoi                 │                                                                                          │
+├───────────────────────────┼──────────────────────────────────────────────────────────────────────────────────────────┤
+│ useAgreement              │ dua-ni-160816                                                                            │
+├───────────────────────────┼──────────────────────────────────────────────────────────────────────────────────────────┤
+│ irbRequired               │ false                                                                                    │
+├───────────────────────────┼──────────────────────────────────────────────────────────────────────────────────────────┤
+│ privateAccessInstructions │ See https://ant.isi.edu/datasets/#getting-datasets for information on obtaining this     │
+│                           │ dataset.                                                                                 │
+│                           │ See                                                                                      │
+└───────────────────────────┴──────────────────────────────────────────────────────────────────────────────────────────┘
+
+Dataset Contents
+
+iana-<timestamp>-ipv4-address-space.{txt,fsdb}                iana allocation which this hitlist covers (old hitlists
+                                                              have .txt, new - .fsdb)
+internet_address_hitlist_it115w-20260213.README.txt           copy of this README
+internet_address_hitlist_it115w-20260213.fsdb.bz2             bzip2 compressed FSDB text file
+internet_address_hitlist_it115w-20260213.geolocation.fsdb.bz2 bzip2 compressed FSDB text file of geolocated blocks using
+                                                              MaxMind data (if available)
+internet_address_verfploter_hitlist_it115w-20260213.fsdb.bz2  bzip2 compressed FSDB text file that can be used if one IP
+                                                              per block is not sufficient (included starting it89w)
+.sha1sum                                                      SHA-1 checksum
+
+The file ".sha1sum" contains SHA1 checksums of individual compressed files. The integrity of the distribution thus can
+be checked by independently calculating SHA1 sums of files and comparing them with those listed in the file. If you have
+the sha1sum utility installed on your system, you can do that by executing:
+
+    sha1sum --check .sha1sum
+
+This has to be done before files are uncompressed.
+
+Data Format
+
+Format of hitlist files is described here: http://www.isi.edu/ant/traces/topology/ip_hitlists/format_description.html
+
+The format is flat ascii text FSDB format.
+
+  Additional targets
+
+Starting it89, an additional hitlist is provided:
+
+ internet_address_verfploter_hitlist_it<NUMBER>w-<DATE>.fsdb.bz2
+
+It can be used when the single target provided by the main hitlist is not reliable. This hitlist contains several
+targets that can be all pinged in turn in order to increase likelihood of getting a response. The file is
+bzip2-compressed FSDB with the header:
+
+ #fsdb -F t block octets
+
+where block is a hexadecimal representation of the /24 block, and octets is a comma-separated list of the hexadecimal
+representation of the last octet. For example:
+
+ 0a010200        01,10,ff
+
+represents 3 potential targets from 10.1.2.0/24, namely 10.1.2.1, 10.1.2.16, and 10.1.2.255.
+
+The addition of this file has been prompted by our anycast research and work with Verfploeter
+
+Prior Work
+
+This IP hitlist builds on prior work by Olaf Maennel et al., used in their paper:
+
+Randy Bush, Olaf Maennel, Matthew Roughan, and Steve Uhlig. Internet optometry: assessing the broken glasses in Internet
+reachability. Internet Measurement Conference 2009, Chicago, USA, November 2009.
+
+Their work in turn builds on the hitlist generated by CAIDA as part of their Skitter tool:
+http://www.caida.org/tools/measurement/skitter used in several prior papers, including:
+
+B. Huffaker, M. Fomenkov, D. Moore, and k. claffy Macroscopic analyses of the infrastructure: measurement and
+visualization of Internet connectivity and performance. Passive and Active Network Measurement Workshop, April 2001
+
+This hitlist extends that work using Internet census data, as described in
+
+John Heidemann, Yuri Pradkin, Ramesh Govindan, Christos Papadopoulos, Genevieve Bartlett, and Joseph Bannister. Census
+and Survey of the Visible Internet. Proceedings of the ACM Internet Measurement Conference, Oct. 2008.
+http://doi.acm.org/10.1145/1452520.1452542
+
+The paper describing the hitlist methodology:
+
+Xun Fan and John Heidemann. Selecting Representative IP Addresses for Internet Topology Studies. In proceedings of the
+ACM Internet Measurement Conference (IMC). Melbourne, Australia, ACM. November, 2010.
+(http://www.isi.edu/~xunfan/research/Fan10a.pdf)
+
+This particularly hitlist is based on Internet Addresses Census datasets, PREDICT ID
+USC-LANDER/LANDER:internet_address_census_it100w-20220808 through LANDER:internet_address_census_it115w-20260213.
+(Traces taken 2022-08-08 to ). Provided by the USC/LANDER project. http://www.isi.edu/ant/lander.
+
+Citation
+
+If you use this trace to conduct additional research, please cite it as:
+
+Internet Addresses Hitlist Dataset, PREDICT ID: USC-LANDER/internet_address_hitlist_it115w-20260213/rev15705. Provided
+by the USC/LANDER project (http://www.isi.edu/ant/lander).
+
+User Annotations
+
+
+Our hitlist has been used in several ongoing or published research works, including
+
+Pietro Marchetta, Walter de Donato, Antonio Pescapé. Detecting Third-party Addresses in Traceroute IP Paths. Poster at
+ACM SIGCOMM 2012 (SIGCOMM '12). To Appear.
+
+Categories:
+  • Datasets
+  • LANDER
+  • LANDER:Datasets
+  • LANDER:Datasets:AddressSpace
+  • LANDER:Datasets:AddressSpace:Hitlists

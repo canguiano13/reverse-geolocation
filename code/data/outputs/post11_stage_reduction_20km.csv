@@ -1,0 +1,6 @@
+stage,unique_24s,n_schools,median_asns,reduction_pct
+Candidates (Phase 0+1),20457,179,n/a,baseline
+After Phase 2 (DNS filter),37,7,n/a,99.8%
+After Phase 3 (ASN confirm),37,7,1,0.0%
+After Phase 3b (reattr.),37,7,1,0.0%
+After Phase 4 (Atlas valid),37,7,1,0.0%

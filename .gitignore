@@ -1,10 +1,21 @@
-# large data files, do not push to GitHub
-code/data/bdc_36_Cable_fixed_broadband_D25_04may2026.csv
-code/data/bdc_36_FibertothePremises_fixed_broadband_D25_04may2026.csv
-code/data/phase1_candidates.csv
-code/data/GeoLite2-City.mmdb
-code/data/2026-03_categorized_ases.csv
-cloud-provider-ip-addresses/
+# Large data files thats too big for GitHub, download separately
+code/data/inputs/ipinfo/
+code/data/inputs/isi/internet_address_verfploeter_hitlist_it115w-20260213.fsdb.bz2
+code/data/inputs/GeoLite2-City.mmdb
+code/data/inputs/bdc_36_Cable_fixed_broadband_D25_04may2026.csv
+code/data/inputs/bdc_36_FibertothePremises_fixed_broadband_D25_04may2026.csv
+
+code/data/outputs/phase1_candidates_5km.csv
+code/data/outputs/phase1_candidates_10km.csv
+code/data/outputs/phase1_candidates_20km.csv
+code/data/outputs/phase1_candidates_30km.csv
+code/data/outputs/phase_candidates_5km.csv
+code/data/outputs/phase_candidates_10km.csv
+code/data/outputs/phase_candidates_20km.csv
+code/data/outputs/phase_candidates_30km.csv
+
+code/data/outputs/verification_results.csv
+code/data/outputs/url_verification.csv
 
 .DS_Store
 # Byte-compiled / optimized / DLL files
@@ -225,3 +236,6 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+
+code/README.md

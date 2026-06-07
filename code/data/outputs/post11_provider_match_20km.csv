@@ -1,0 +1,7 @@
+category,ips,ip_pct,schools,school_pct
+Commercial FCC match,0,0.0%,0,0.0%
+Non-commercial (edu/gov),4869,57.8%,4,57.1%
+No match,3560,42.2%,3,42.9%
+-- high confidence,8145,,,
+-- medium confidence,282,,,
+-- low confidence,2,,,

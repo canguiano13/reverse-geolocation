@@ -1,0 +1,201 @@
+cidr,school_name,verdict,ny_k12_found,k12_found,ips_checked,total_hosts
+104.227.30.128/27,Lorraine Elementary School,CONFIRMED_NEGATIVE,,,30,30
+24.97.124.44/30,South Brooklyn Community High School,CONFIRMED_NEGATIVE,,,2,2
+23.246.96.80/29,South Brooklyn Community High School,CONFIRMED_NEGATIVE,,,6,6
+169.59.155.0/26,Seaford Harbor Elementary School,CONFIRMED_NEGATIVE,,,40,62
+38.109.85.128/27,South Brooklyn Community High School,CONFIRMED_NEGATIVE,,,30,30
+38.66.128.128/25,Rachel Carson High School for Coastal Studies,CONFIRMED_NEGATIVE,,,40,126
+24.213.158.140/30,Jefferson Road Elementary School,CONFIRMED_NEGATIVE,,,2,2
+24.103.16.208/29,South Brooklyn Community High School,CONFIRMED_NEGATIVE,,,6,6
+162.243.23.192/26,Stuyvesant High School,CONFIRMED_NEGATIVE,,,40,62
+24.97.84.144/29,Lorraine Elementary School,CONFIRMED_NEGATIVE,,,6,6
+108.176.115.44/30,Kenmore West Sr. High School,CONFIRMED_NEGATIVE,,,2,2
+167.230.217.128/26,South Brooklyn Community High School,CONFIRMED_NEGATIVE,,,40,62
+208.105.227.128/29,Westhill Central High School,CONFIRMED_NEGATIVE,,,6,6
+72.43.245.64/27,Rockester Preparatory High School,CONFIRMED_NEGATIVE,,,30,30
+24.39.252.240/28,Kenmore West Sr. High School,CONFIRMED_NEGATIVE,,,14,14
+92.118.45.0/24,South Brooklyn Community High School,CONFIRMED_NEGATIVE,,,40,254
+50.218.10.128/25,Roosevelt Elementary School,CONFIRMED_NEGATIVE,,,40,126
+23.246.121.196/30,South Brooklyn Community High School,CONFIRMED_NEGATIVE,,,2,2
+23.246.114.176/28,Stuyvesant High School,CONFIRMED_NEGATIVE,,,14,14
+24.97.6.164/30,Blue Creek Elementary School,CONFIRMED_NEGATIVE,,,2,2
+24.213.135.72/29,Rockester Preparatory High School,CONFIRMED_NEGATIVE,,,6,6
+24.213.213.88/29,Rockester Preparatory High School,CONFIRMED_NEGATIVE,,,6,6
+72.43.6.44/30,Bell Top Elementary School,CONFIRMED_NEGATIVE,,,2,2
+98.0.165.216/29,South Brooklyn Community High School,CONFIRMED_NEGATIVE,,,6,6
+23.246.101.224/29,Hunter College Campus Schools,CONFIRMED_NEGATIVE,,,6,6
+72.45.198.32/29,Kenmore West Sr. High School,CONFIRMED_NEGATIVE,,,6,6
+24.105.179.40/29,Jefferson Road Elementary School,CONFIRMED_NEGATIVE,,,6,6
+150.221.47.96/28,West Senior High School,CONFIRMED_NEGATIVE,,,14,14
+108.30.223.0/24,Hanson Place Seventh-Day Adventist Elementary School,CONFIRMED_NEGATIVE,,,40,254
+146.75.135.34/31,Bethlehem Central Middle School,CONFIRMED_NEGATIVE,,,2,2
+72.43.242.180/30,John F Hughes Elementary School,CONFIRMED_NEGATIVE,,,2,2
+50.108.232.158/31,OESJ High School,CONFIRMED_NEGATIVE,,,2,2
+24.213.142.144/30,Rockester Preparatory High School,CONFIRMED_NEGATIVE,,,2,2
+68.237.37.0/24,Hunter College Campus Schools,CONFIRMED_NEGATIVE,,,40,254
+85.190.158.0/24,Henry P Becton Regional High School,CONFIRMED_NEGATIVE,,,40,254
+38.117.221.128/26,South Brooklyn Community High School,CONFIRMED_NEGATIVE,,,40,62
+184.75.68.112/28,Hanson Place Seventh-Day Adventist Elementary School,CONFIRMED_NEGATIVE,,,14,14
+208.105.92.240/28,South Brooklyn Community High School,CONFIRMED_NEGATIVE,,,14,14
+12.87.59.160/27,South Brooklyn Community High School,CONFIRMED_NEGATIVE,,,30,30
+184.74.15.0/29,Green Tech High Charter School,CONFIRMED_NEGATIVE,,,6,6
+184.75.46.216/29,Haviland Middle School,CONFIRMED_NEGATIVE,,,6,6
+24.103.110.128/28,Saint Edmund Preparatory High School,CONFIRMED_NEGATIVE,,,14,14
+142.105.122.208/30,South Brooklyn Community High School,CONFIRMED_NEGATIVE,,,2,2
+50.231.216.0/24,Stuyvesant High School,CONFIRMED_NEGATIVE,,,40,254
+50.74.102.56/30,South Brooklyn Community High School,CONFIRMED_NEGATIVE,,,2,2
+38.117.170.112/29,Hunter College Campus Schools,CONFIRMED_NEGATIVE,,,6,6
+24.103.91.36/30,Hunter College Campus Schools,CONFIRMED_NEGATIVE,,,2,2
+24.169.111.184/29,Lancaster Middle School,CONFIRMED_NEGATIVE,,,6,6
+184.74.39.80/28,Lancaster Middle School,CONFIRMED_NEGATIVE,,,14,14
+50.74.84.200/29,Saint Edmund Preparatory High School,CONFIRMED_NEGATIVE,,,6,6
+24.97.83.84/30,Lorraine Elementary School,CONFIRMED_NEGATIVE,,,2,2
+24.97.1.252/30,Bethlehem Central Middle School,CONFIRMED_NEGATIVE,,,2,2
+50.75.35.120/29,Bell Top Elementary School,CONFIRMED_NEGATIVE,,,6,6
+24.97.28.112/29,Bethlehem Central Middle School,CONFIRMED_NEGATIVE,,,6,6
+50.74.187.68/30,South Brooklyn Community High School,CONFIRMED_NEGATIVE,,,2,2
+205.179.252.0/24,South Brooklyn Community High School,CONFIRMED_NEGATIVE,,,40,254
+50.74.118.184/29,South Brooklyn Community High School,CONFIRMED_NEGATIVE,,,6,6
+98.0.174.152/29,South Brooklyn Community High School,CONFIRMED_NEGATIVE,,,6,6
+38.104.72.224/28,South Brooklyn Community High School,CONFIRMED_NEGATIVE,,,14,14
+184.75.54.152/29,South Brooklyn Community High School,CONFIRMED_NEGATIVE,,,6,6
+24.39.7.128/28,Green Tech High Charter School,CONFIRMED_NEGATIVE,,,14,14
+157.191.45.51/32,Stuyvesant High School,CONFIRMED_NEGATIVE,,,1,1
+69.193.10.104/29,Blue Creek Elementary School,CONFIRMED_NEGATIVE,,,6,6
+72.43.192.216/29,West Senior High School,CONFIRMED_NEGATIVE,,,6,6
+24.97.193.128/27,Macedon Elementary School,CONFIRMED_NEGATIVE,,,30,30
+208.125.155.16/29,Jefferson Road Elementary School,CONFIRMED_NEGATIVE,,,6,6
+50.75.29.0/29,Rockester Preparatory High School,CONFIRMED_NEGATIVE,,,6,6
+24.39.216.64/27,Gaskill High School,CONFIRMED_NEGATIVE,,,30,30
+72.45.149.16/30,Lorraine Elementary School,CONFIRMED_NEGATIVE,,,2,2
+38.140.103.160/28,South Brooklyn Community High School,CONFIRMED_NEGATIVE,,,14,14
+198.154.85.128/26,Lorraine Elementary School,CONFIRMED_NEGATIVE,,,40,62
+100.35.249.0/24,Henry P Becton Regional High School,CONFIRMED_NEGATIVE,,,40,254
+98.0.245.152/30,South Brooklyn Community High School,CONFIRMED_NEGATIVE,,,2,2
+208.105.188.40/29,Bethlehem Central Middle School,CONFIRMED_NEGATIVE,,,6,6
+208.105.47.168/29,Elisabeth Irwin High School,CONFIRMED_NEGATIVE,,,6,6
+50.74.200.28/30,South Brooklyn Community High School,CONFIRMED_NEGATIVE,,,2,2
+73.198.86.224/27,Evergreen Elementary School,CONFIRMED_NEGATIVE,,,30,30
+24.105.147.16/29,South Brooklyn Community High School,CONFIRMED_NEGATIVE,,,6,6
+148.76.88.176/29,Hunter College Campus Schools,CONFIRMED_NEGATIVE,,,6,6
+24.39.172.88/29,Lancaster Middle School,CONFIRMED_NEGATIVE,,,6,6
+24.39.55.40/30,John F Hughes Elementary School,CONFIRMED_NEGATIVE,,,2,2
+108.176.34.72/29,South Brooklyn Community High School,CONFIRMED_NEGATIVE,,,6,6
+24.213.188.8/29,Rockester Preparatory High School,CONFIRMED_NEGATIVE,,,6,6
+184.74.108.64/29,Lorraine Elementary School,CONFIRMED_NEGATIVE,,,6,6
+38.127.207.96/29,Highview School,CONFIRMED_NEGATIVE,,,6,6
+24.39.220.160/30,Spry Middle School,CONFIRMED_NEGATIVE,,,2,2
+208.105.12.128/26,South Brooklyn Community High School,CONFIRMED_NEGATIVE,,,40,62
+24.213.214.8/29,Jefferson Road Elementary School,CONFIRMED_NEGATIVE,,,6,6
+208.105.78.0/29,South Brooklyn Community High School,CONFIRMED_NEGATIVE,,,6,6
+24.97.77.64/27,Cohen Middle School,CONFIRMED_NEGATIVE,,,30,30
+50.75.36.160/30,Bell Top Elementary School,CONFIRMED_NEGATIVE,,,2,2
+38.117.183.192/27,South Brooklyn Community High School,CONFIRMED_NEGATIVE,,,30,30
+69.116.139.192/26,Highview School,CONFIRMED_NEGATIVE,,,40,62
+104.129.68.0/24,Highview School,CONFIRMED_NEGATIVE,,,40,254
+198.179.91.40/29,Hanson Place Seventh-Day Adventist Elementary School,CONFIRMED_NEGATIVE,,,6,6
+50.74.216.44/30,South Brooklyn Community High School,CONFIRMED_NEGATIVE,,,2,2
+24.103.122.176/28,Hunter College Campus Schools,CONFIRMED_NEGATIVE,,,14,14
+50.74.242.204/30,Sewanhaka High School,CONFIRMED_NEGATIVE,,,2,2
+50.74.170.0/29,Stuyvesant High School,CONFIRMED_NEGATIVE,,,6,6
+24.169.71.136/29,Lancaster Middle School,CONFIRMED_NEGATIVE,,,6,6
+108.176.77.108/30,Tech Valley High School,CONFIRMED_NEGATIVE,,,2,2
+38.104.191.0/28,South Brooklyn Community High School,CONFIRMED_NEGATIVE,,,14,14
+146.75.149.104/31,Fishkill Elementary School,CONFIRMED_NEGATIVE,,,2,2
+208.125.226.156/30,Blue Creek Elementary School,CONFIRMED_NEGATIVE,,,2,2
+136.23.62.216/30,Westhill Central High School,CONFIRMED_NEGATIVE,,,2,2
+108.27.255.0/24,"Columbia Secondary School For Math, Science And Engineering",CONFIRMED_NEGATIVE,,,40,254
+24.39.181.96/29,Jefferson Road Elementary School,CONFIRMED_NEGATIVE,,,6,6
+98.0.201.116/30,South Brooklyn Community High School,CONFIRMED_NEGATIVE,,,2,2
+104.30.173.28/32,South Brooklyn Community High School,CONFIRMED_NEGATIVE,,,1,1
+24.103.166.56/29,Westhill Central High School,CONFIRMED_NEGATIVE,,,6,6
+72.43.181.192/27,Hanson Place Seventh-Day Adventist Elementary School,CONFIRMED_NEGATIVE,,,30,30
+157.130.251.0/25,South Brooklyn Community High School,CONFIRMED_NEGATIVE,,,40,126
+38.65.37.0/24,Rockester Preparatory High School,CONFIRMED_NEGATIVE,,,40,254
+24.103.126.224/29,South Brooklyn Community High School,CONFIRMED_NEGATIVE,,,6,6
+69.193.25.40/30,John F Hughes Elementary School,CONFIRMED_NEGATIVE,,,2,2
+50.75.33.0/28,Bell Top Elementary School,CONFIRMED_NEGATIVE,,,14,14
+38.105.182.0/28,Stuyvesant High School,CONFIRMED_NEGATIVE,,,14,14
+208.125.171.24/30,Albion Middle School,CONFIRMED_NEGATIVE,,,2,2
+104.241.193.0/24,Rachel Carson High School for Coastal Studies,CONFIRMED_NEGATIVE,,,40,254
+141.155.163.0/24,Waverly Park Elementary School,CONFIRMED_NEGATIVE,,,40,254
+72.45.173.88/29,John F Hughes Elementary School,CONFIRMED_NEGATIVE,,,6,6
+24.213.139.176/28,Rockester Preparatory High School,CONFIRMED_NEGATIVE,,,14,14
+139.104.192.0/24,South Brooklyn Community High School,CONFIRMED_NEGATIVE,,,40,254
+50.74.21.188/30,South Brooklyn Community High School,CONFIRMED_NEGATIVE,,,2,2
+204.16.120.29/32,South Brooklyn Community High School,CONFIRMED_NEGATIVE,,,1,1
+184.74.74.124/30,Westhill Central High School,CONFIRMED_NEGATIVE,,,2,2
+184.74.127.232/29,Kenmore West Sr. High School,CONFIRMED_NEGATIVE,,,6,6
+24.39.115.168/30,Rhinebeck High School,CONFIRMED_NEGATIVE,,,2,2
+24.213.191.248/30,Bethlehem Central Middle School,CONFIRMED_NEGATIVE,,,2,2
+185.195.57.180/31,South Brooklyn Community High School,CONFIRMED_NEGATIVE,,,2,2
+23.246.123.56/30,Stuyvesant High School,CONFIRMED_NEGATIVE,,,2,2
+184.75.41.144/28,South Brooklyn Community High School,CONFIRMED_NEGATIVE,,,14,14
+46.248.140.176/29,South Brooklyn Community High School,CONFIRMED_NEGATIVE,,,6,6
+50.75.163.120/29,Rockester Preparatory High School,CONFIRMED_NEGATIVE,,,6,6
+38.104.201.224/30,South Brooklyn Community High School,CONFIRMED_NEGATIVE,,,2,2
+24.39.156.120/29,Queens Technical High School,CONFIRMED_NEGATIVE,,,6,6
+24.169.78.136/30,Rockester Preparatory High School,CONFIRMED_NEGATIVE,,,2,2
+208.125.101.60/30,Rockester Preparatory High School,CONFIRMED_NEGATIVE,,,2,2
+208.127.230.4/30,South Brooklyn Community High School,CONFIRMED_NEGATIVE,,,2,2
+72.45.233.104/30,Kenmore West Sr. High School,CONFIRMED_NEGATIVE,,,2,2
+208.105.130.128/29,Bethlehem Central Middle School,CONFIRMED_NEGATIVE,,,6,6
+150.221.55.216/30,Tech Valley High School,CONFIRMED_NEGATIVE,,,2,2
+46.248.132.96/28,South Brooklyn Community High School,CONFIRMED_NEGATIVE,,,14,14
+24.169.88.88/29,West Senior High School,CONFIRMED_NEGATIVE,,,6,6
+108.145.159.96/32,West Senior High School,CONFIRMED_NEGATIVE,,,1,1
+71.172.121.0/24,South Brooklyn Community High School,CONFIRMED_NEGATIVE,,,40,254
+50.75.138.0/27,Union-Endicott High School,CONFIRMED_NEGATIVE,,,30,30
+208.105.183.80/28,Bethlehem Central Middle School,CONFIRMED_NEGATIVE,,,14,14
+208.125.108.56/30,Rockester Preparatory High School,CONFIRMED_NEGATIVE,,,2,2
+107.172.78.0/24,Lorraine Elementary School,CONFIRMED_NEGATIVE,,,40,254
+69.193.7.168/29,Lake Avenue Elementary School,CONFIRMED_NEGATIVE,,,6,6
+24.103.32.120/29,Stuyvesant High School,CONFIRMED_NEGATIVE,,,6,6
+38.104.74.182/31,South Brooklyn Community High School,CONFIRMED_NEGATIVE,,,2,2
+24.103.17.32/28,Elisabeth Irwin High School,CONFIRMED_NEGATIVE,,,14,14
+38.86.164.48/28,South Brooklyn Community High School,CONFIRMED_NEGATIVE,,,14,14
+172.226.19.160/27,South Brooklyn Community High School,CONFIRMED_NEGATIVE,,,30,30
+72.45.199.80/29,Kenmore West Sr. High School,CONFIRMED_NEGATIVE,,,6,6
+72.43.208.0/30,Bell Top Elementary School,CONFIRMED_NEGATIVE,,,2,2
+38.104.52.192/28,Bethlehem Central Middle School,CONFIRMED_NEGATIVE,,,14,14
+172.226.202.64/31,John F Hughes Elementary School,CONFIRMED_NEGATIVE,,,2,2
+74.199.250.240/28,South Brooklyn Community High School,CONFIRMED_NEGATIVE,,,14,14
+64.19.65.32/27,Ohio Elementary School,CONFIRMED_NEGATIVE,,,30,30
+208.125.0.36/30,South Brooklyn Community High School,CONFIRMED_NEGATIVE,,,2,2
+74.199.137.232/29,Stuyvesant High School,CONFIRMED_NEGATIVE,,,6,6
+50.75.154.184/30,North Broad Elementary School,CONFIRMED_NEGATIVE,,,2,2
+50.74.201.156/30,South Brooklyn Community High School,CONFIRMED_NEGATIVE,,,2,2
+24.213.138.108/30,Donlin Drive Elementary School,CONFIRMED_NEGATIVE,,,2,2
+24.103.11.148/30,Elisabeth Irwin High School,CONFIRMED_NEGATIVE,,,2,2
+72.43.26.228/30,Westhill Central High School,CONFIRMED_NEGATIVE,,,2,2
+69.193.220.208/30,Hanson Place Seventh-Day Adventist Elementary School,CONFIRMED_NEGATIVE,,,2,2
+24.58.217.66/32,Lorraine Elementary School,CONFIRMED_NEGATIVE,,,1,1
+178.159.176.152/29,South Brooklyn Community High School,CONFIRMED_NEGATIVE,,,6,6
+24.39.71.0/28,Union-Endicott High School,CONFIRMED_NEGATIVE,,,14,14
+208.105.44.176/29,South Brooklyn Community High School,CONFIRMED_NEGATIVE,,,6,6
+24.97.115.176/28,Kenmore West Sr. High School,CONFIRMED_NEGATIVE,,,14,14
+24.103.78.208/29,South Brooklyn Community High School,CONFIRMED_NEGATIVE,,,6,6
+100.8.228.0/24,South Brooklyn Community High School,CONFIRMED_NEGATIVE,,,40,254
+24.103.111.192/28,Saint Edmund Preparatory High School,CONFIRMED_NEGATIVE,,,14,14
+184.74.218.128/26,South Brooklyn Community High School,CONFIRMED_NEGATIVE,,,40,62
+128.242.119.0/24,South Brooklyn Community High School,CONFIRMED_NEGATIVE,,,40,254
+50.222.181.224/28,Bethlehem Central Middle School,CONFIRMED_NEGATIVE,,,14,14
+98.0.129.128/29,Saint Edmund Preparatory High School,CONFIRMED_NEGATIVE,,,6,6
+24.39.145.60/30,Queens Technical High School,CONFIRMED_NEGATIVE,,,2,2
+50.75.67.160/28,Rockester Preparatory High School,CONFIRMED_NEGATIVE,,,14,14
+50.75.45.116/30,Rockester Preparatory High School,CONFIRMED_NEGATIVE,,,2,2
+96.250.226.0/24,Rachel Carson High School for Coastal Studies,CONFIRMED_NEGATIVE,,,40,254
+69.193.56.128/28,Lorraine Elementary School,CONFIRMED_NEGATIVE,,,14,14
+72.43.154.212/30,South Brooklyn Community High School,CONFIRMED_NEGATIVE,,,2,2
+38.88.210.192/29,Hanson Place Seventh-Day Adventist Elementary School,CONFIRMED_NEGATIVE,,,6,6
+72.45.153.184/29,Lorraine Elementary School,CONFIRMED_NEGATIVE,,,6,6
+208.105.43.36/30,South Brooklyn Community High School,CONFIRMED_NEGATIVE,,,2,2
+208.127.69.242/32,South Brooklyn Community High School,CONFIRMED_NEGATIVE,,,1,1
+12.182.255.0/24,Tottenville High School,CONFIRMED_NEGATIVE,,,40,254
+128.77.105.96/27,South Brooklyn Community High School,CONFIRMED_NEGATIVE,,,30,30
+152.179.9.32/28,Kenmore West Sr. High School,CONFIRMED_NEGATIVE,,,14,14
+24.97.139.12/30,Kenmore West Sr. High School,CONFIRMED_NEGATIVE,,,2,2
+131.229.145.10/32,South Brooklyn Community High School,CONFIRMED_NEGATIVE,,,1,1
+208.105.184.32/29,Kenmore West Sr. High School,CONFIRMED_NEGATIVE,,,6,6
+72.43.196.92/30,Ohio Elementary School,CONFIRMED_NEGATIVE,,,2,2
+173.68.76.0/24,Martin Luther King Junior High Technical and Computer Magnet School,CONFIRMED_NEGATIVE,,,40,254
