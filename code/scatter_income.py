@@ -49,6 +49,6 @@ ax.spines["right"].set_visible(False)
 ax.legend(loc="upper left", fontsize=8, framealpha=0.8)
 
 plt.tight_layout()
-plt.savefig("/Users/sahildadhwal/Desktop/figures/income_scatter.png", dpi=150, bbox_inches="tight")
+plt.savefig("/reverse-geolocation/figures/income_scatter.png", dpi=150, bbox_inches="tight")
 print(f"Saved. rho={rho:.3f}, p={pval:.4e}, n={len(df)}")
 print(f"Found: {df['found'].sum()}, Not found: {(df['found']==0).sum()}")
